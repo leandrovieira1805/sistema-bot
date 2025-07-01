@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste QR Code</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .qr-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .qr-image {
+            max-width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            background: #25d366;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Teste QR Code WhatsApp</h1>
+    
+    <div id="status" class="status info">Aguardando conexão...</div>
+    
+    <div class="qr-container">
+        <button id="generateBtn" onclick="generateQR()">Gerar QR Code</button>
+    </div>
+    
+    <div id="qrDisplay" class="qr-container" style="display: none;">
+        <h3>QR Code Gerado:</h3>
+        <img id="qrImage" class="qr-image" alt="QR Code" />
+        <div id="qrInfo"></div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3002');
+        let isGenerating = false;
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function generateQR() {
+            if (isGenerating) {
+                console.log('Já está gerando, ignorando clique');
+                return;
+            }
+
+            console.log('=== GERANDO QR CODE ===');
+            isGenerating = true;
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('generateBtn').textContent = 'Gerando...';
+            
+            updateStatus('Gerando QR Code...', 'info');
+            
+            socket.emit('init-whatsapp');
+        }
+
+        socket.on('connect', () => {
+            console.log('✅ Conectado ao servidor');
+            updateStatus('Conectado ao servidor', 'success');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('❌ Desconectado do servidor');
+            updateStatus('Desconectado do servidor', 'error');
+        });
+
+        socket.on('whatsapp-status', (status) => {
+            console.log('📱 Status WhatsApp:', status);
+            updateStatus(`Status: ${status.status}`, 'info');
+            
+            if (status.status === 'ready') {
+                isGenerating = false;
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').textContent = 'Gerar QR Code';
+                document.getElementById('qrDisplay').style.display = 'none';
+            }
+        });
+
+        socket.on('qr-code', (qrCodeDataUrl) => {
+            console.log('📱 QR Code recebido!');
+            console.log('Tamanho:', qrCodeDataUrl?.length || 0);
+            console.log('Válido?', !!qrCodeDataUrl && qrCodeDataUrl.startsWith('data:image/'));
+            
+            if (qrCodeDataUrl && qrCodeDataUrl.startsWith('data:image/')) {
+                console.log('✅ QR Code válido!');
+                updateStatus('QR Code gerado com sucesso!', 'success');
+                
+                document.getElementById('qrImage').src = qrCodeDataUrl;
+                document.getElementById('qrInfo').textContent = `Tamanho: ${qrCodeDataUrl.length} caracteres`;
+                document.getElementById('qrDisplay').style.display = 'block';
+                
+                isGenerating = false;
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').textContent = 'Gerar QR Code';
+            } else {
+                console.log('❌ QR Code inválido');
+                updateStatus('QR Code inválido recebido', 'error');
+                isGenerating = false;
+                document.getElementById('generateBtn').disabled = false;
+                document.getElementById('generateBtn').textContent = 'Gerar QR Code';
+            }
+        });
+
+        socket.on('error', (error) => {
+            console.error('❌ Erro:', error);
+            updateStatus(`Erro: ${error}`, 'error');
+            isGenerating = false;
+            document.getElementById('generateBtn').disabled = false;
+            document.getElementById('generateBtn').textContent = 'Gerar QR Code';
+        });
+    </script>
+</body>
+</html> 
