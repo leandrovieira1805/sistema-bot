@@ -30,17 +30,6 @@ app.use(express.json());
 // Servir arquivos estáticos do build
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Rota para servir o index.html em todas as rotas do frontend
-app.get('*', (req, res) => {
-  // Se a requisição for para uma API, não servir o index.html
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ message: 'API endpoint not found' });
-  }
-  
-  // Para todas as outras rotas, servir o index.html (SPA)
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
 let whatsappClient = null;
 let isAuthenticated = false;
 let isInitializing = false;
@@ -931,10 +920,21 @@ app.put('/api/user/:userId/config', (req, res) => {
   }
 });
 
+// Rota para servir o index.html em todas as rotas do frontend (deve ser a última)
+app.get('*', (req, res) => {
+  // Se a requisição for para uma API, não servir o index.html
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+  
+  // Para todas as outras rotas, servir o index.html (SPA)
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 server.listen(PORT, () => {
   console.log(`=== SERVIDOR INICIADO ===`);
   console.log(`Porta: ${PORT}`);
   console.log(`URL: http://localhost:${PORT}`);
   console.log(`Socket.IO: http://localhost:${PORT}`);
-  console.log(`Frontend deve conectar em: http://localhost:3000`);
+  console.log(`Frontend: http://localhost:${PORT}`);
 });
