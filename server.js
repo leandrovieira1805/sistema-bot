@@ -17,7 +17,7 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "*", // Permitir todas as origens em produção
     methods: ["GET", "POST"]
   }
 });
@@ -26,6 +26,20 @@ const PORT = process.env.PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
+
+// Servir arquivos estáticos do build
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Rota para servir o index.html em todas as rotas do frontend
+app.get('*', (req, res) => {
+  // Se a requisição for para uma API, não servir o index.html
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API endpoint not found' });
+  }
+  
+  // Para todas as outras rotas, servir o index.html (SPA)
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 let whatsappClient = null;
 let isAuthenticated = false;
