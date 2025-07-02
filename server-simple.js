@@ -23,8 +23,20 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3002;
 
-app.use(cors());
-app.use(express.json());
+// Configurações para funcionar no Railway
+app.set('trust proxy', 1);
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+// Middleware para logging
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  next();
+});
 
 // Servir arquivos estáticos do build
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -54,16 +66,33 @@ let whatsappClient = null;
 let isAuthenticated = false;
 let isInitializing = false;
 
+// Rota de teste para verificar se o servidor está funcionando
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Rotas de autenticação
 app.post('/api/auth/login', (req, res) => {
+  console.log('Tentativa de login:', req.body);
   const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Username e password são obrigatórios' });
+  }
   
   const user = users.find(u => u.username === username && u.password === password);
   
   if (user) {
     const { password: _, ...userWithoutPassword } = user;
+    console.log('Login bem-sucedido para:', username);
     res.json(userWithoutPassword);
   } else {
+    console.log('Login falhou para:', username);
     res.status(401).json({ message: 'Usuário ou senha inválidos' });
   }
 });
@@ -106,8 +135,8 @@ app.put('/api/user/:userId/config', (req, res) => {
   }
 });
 
-// Rota para servir o index.html
-app.get('/', (req, res) => {
+// Rota para servir o index.html - deve ser a última rota
+app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
@@ -163,9 +192,11 @@ io.on('connection', (socket) => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`=== SERVIDOR INICIADO ===`);
   console.log(`Porta: ${PORT}`);
   console.log(`URL: http://localhost:${PORT}`);
   console.log(`Frontend: http://localhost:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Railway URL: ${process.env.RAILWAY_STATIC_URL || 'N/A'}`);
 }); 

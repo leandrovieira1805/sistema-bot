@@ -1,5 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 
+const SOCKET_URL = window.location.origin;
+
 class WhatsAppService {
   private socket: Socket | null = null;
   private callbacks: {
@@ -16,7 +18,8 @@ class WhatsAppService {
 
   private connect() {
     console.log('=== WHATSAPP SERVICE: Conectando ao servidor ===');
-    this.socket = io('http://localhost:3002');
+    console.log('Socket URL:', SOCKET_URL);
+    this.socket = io(SOCKET_URL);
 
     this.socket.on('connect', () => {
       console.log('✅ Conectado ao servidor WhatsApp');
