@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { StoreConfig, Category, Promotion, Order, CustomerSession, Product } from '../types';
 import { whatsappService } from '../services/whatsappService';
+import { useAuth } from '../contexts/AuthContext';
 
 const defaultStoreConfig: StoreConfig = {
   name: 'Pizzaria Delícia',
   greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
   deliveryFee: 5.00,
   pixKey: 'contato@pizzariadelicia.com.br',
-  address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo'
+  address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
+  menuImage: 'https://exemplo.com/cardapio.jpg'
 };
 
 const sampleCategories: Category[] = [
@@ -47,11 +49,27 @@ const sampleCategories: Category[] = [
 ];
 
 export function useStore() {
+  const { user } = useAuth();
   const [storeConfig, setStoreConfig] = useState<StoreConfig>(defaultStoreConfig);
   const [categories, setCategories] = useState<Category[]>(sampleCategories);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [customerSessions, setCustomerSessions] = useState<CustomerSession[]>([]);
+
+  // Carregar configurações do usuário logado
+  useEffect(() => {
+    if (user) {
+      // Carregar configurações específicas do usuário
+      fetch(`/api/user/${user.id}/config`)
+        .then(res => res.json())
+        .then(config => {
+          setStoreConfig(config);
+        })
+        .catch(error => {
+          console.error('Erro ao carregar configurações do usuário:', error);
+        });
+    }
+  }, [user]);
 
   // Sincronizar com o backend
   useEffect(() => {
@@ -91,12 +109,26 @@ export function useStore() {
   };
 
   // Store Config
-  const updateStoreConfig = (config: Partial<StoreConfig>) => {
-    setStoreConfig(prev => {
-      const newConfig = { ...prev, ...config };
-      syncWithBackend({ config: newConfig });
-      return newConfig;
-    });
+  const updateStoreConfig = async (config: Partial<StoreConfig>) => {
+    if (!user) return;
+
+    try {
+      const response = await fetch(`/api/user/${user.id}/config`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(config),
+      });
+
+      if (response.ok) {
+        const updatedConfig = await response.json();
+        setStoreConfig(updatedConfig);
+        syncWithBackend({ config: updatedConfig });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar configurações:', error);
+    }
   };
 
   // Categories and Products

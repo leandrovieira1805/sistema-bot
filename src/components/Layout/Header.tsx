@@ -1,15 +1,23 @@
 import React from 'react';
-import { QrCode, Wifi, WifiOff, Settings } from 'lucide-react';
+import { QrCode, Wifi, WifiOff, Settings, LogOut, User } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   title: string;
-  onOpenWhatsAppSettings: () => void;
   botConnected: boolean;
+  onWhatsAppConnectionChange: (connected: boolean) => void;
 }
 
-export function Header({ title, onOpenWhatsAppSettings, botConnected }: HeaderProps) {
+export function Header({ title, botConnected, onWhatsAppConnectionChange }: HeaderProps) {
+  const { user, logout } = useAuth();
+
+  const handleOpenWhatsAppSettings = () => {
+    // Implementar abertura do modal WhatsApp
+    console.log('Abrir configurações WhatsApp');
+  };
+
   return (
-    <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 ml-64">
+    <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
         
@@ -24,12 +32,28 @@ export function Header({ title, onOpenWhatsAppSettings, botConnected }: HeaderPr
           </div>
           
           <button
-            onClick={onOpenWhatsAppSettings}
+            onClick={handleOpenWhatsAppSettings}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
             <Settings size={18} />
             WhatsApp
           </button>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+              <User size={16} />
+              {user?.username}
+            </div>
+            
+            <button
+              onClick={logout}
+              className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+              title="Sair"
+            >
+              <LogOut size={18} />
+              Sair
+            </button>
+          </div>
         </div>
       </div>
     </div>

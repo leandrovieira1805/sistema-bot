@@ -70,3 +70,25 @@ export interface CustomerSession {
   };
   messages: ChatMessage[];
 }
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  password: string; // Será hasheada
+  storeConfig: StoreConfig;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  login: (credentials: LoginCredentials) => Promise<boolean>;
+  logout: () => void;
+  isLoading: boolean;
+}

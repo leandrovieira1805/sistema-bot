@@ -1,16 +1,29 @@
-# Bot WhatsApp - Sistema de Pedidos
+# Sistema Bot WhatsApp com Autenticação
 
-Este é um sistema completo de bot para WhatsApp que permite receber pedidos automaticamente e gerenciá-los através de um painel administrativo.
+Sistema completo de bot WhatsApp com dashboard administrativo e sistema de autenticação multi-usuário.
 
 ## 🚀 Funcionalidades
 
-- ✅ Conexão real com WhatsApp Web
-- ✅ Recebimento automático de mensagens
-- ✅ Painel administrativo para gerenciar pedidos
+### Sistema de Autenticação
+- ✅ Login com usuário e senha
+- ✅ Cada usuário tem suas próprias configurações do bot
+- ✅ Proteção de rotas
+- ✅ Logout seguro
 - ✅ Interface moderna e responsiva
-- ✅ Sistema de categorias de produtos
-- ✅ Gerenciamento de promoções
-- ✅ Configurações da loja
+
+### Bot WhatsApp
+- ✅ Envio de foto do cardápio quando solicitado
+- ✅ Reconhecimento de pedidos por nome do item
+- ✅ Busca automática de valores nas configurações
+- ✅ Processamento de pedidos completo
+- ✅ Suporte a PIX e dinheiro
+
+### Dashboard Administrativo
+- ✅ Gestão de categorias e produtos
+- ✅ Configurações personalizadas por usuário
+- ✅ Painel de pedidos em tempo real
+- ✅ Simulador do bot WhatsApp
+- ✅ Gestão de promoções
 
 ## 📋 Pré-requisitos
 
@@ -23,8 +36,8 @@ Este é um sistema completo de bot para WhatsApp que permite receber pedidos aut
 
 1. **Clone o repositório:**
 ```bash
-git clone <url-do-repositorio>
-cd project
+git clone https://github.com/leandrovieira1805/sistema-bot.git
+cd sistema-bot
 ```
 
 2. **Instale as dependências:**
@@ -33,142 +46,133 @@ npm install
 ```
 
 3. **Configure as variáveis de ambiente (opcional):**
-Crie um arquivo `.env` na raiz do projeto:
-```env
-PORT=3001
-CHROME_PATH=C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe
-```
-
-## 🚀 Como Executar
-
-### Opção 1: Desenvolvimento (Recomendado)
-Para rodar tanto o servidor backend quanto o frontend simultaneamente:
 ```bash
-npm run dev:full
+# Crie um arquivo .env na raiz do projeto
+PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 ```
 
-### Opção 2: Separadamente
-1. **Servidor backend:**
+4. **Inicie o servidor:**
 ```bash
-npm run server
+npm start
 ```
 
-2. **Frontend (em outro terminal):**
+## 👤 Usuários Padrão
+
+O sistema vem com um usuário administrador pré-configurado:
+
+- **Usuário:** `admin`
+- **Senha:** `admin123`
+
+## 📱 Como Usar
+
+### 1. Acesso ao Dashboard
+- Acesse `http://localhost:3000`
+- Faça login com as credenciais acima
+- Configure suas configurações personalizadas
+
+### 2. Configuração do Bot
+- Vá em "Configurações da Loja"
+- Adicione a URL da imagem do seu cardápio
+- Configure nome da loja, mensagens, PIX, etc.
+
+### 3. Gestão de Produtos
+- Crie categorias (ex: Pizzas, Bebidas)
+- Adicione produtos com nome, preço e imagem
+- Os produtos serão reconhecidos automaticamente pelo bot
+
+### 4. Conectar WhatsApp
+- Clique no botão "WhatsApp" no header
+- Escaneie o QR Code com seu WhatsApp
+- O bot estará pronto para receber pedidos
+
+### 5. Teste o Bot
+- Envie "oi" para o número conectado
+- Digite "1" ou "cardápio" para ver a foto
+- Digite o nome de um produto para fazer pedido
+
+## 🔐 Sistema de Autenticação
+
+### Estrutura de Usuários
+Cada usuário possui:
+- Configurações únicas da loja
+- Produtos e categorias próprios
+- Histórico de pedidos independente
+
+### Adicionar Novos Usuários
+1. Acesse o painel administrativo
+2. Vá em "Gerenciar Usuários" (se implementado)
+3. Crie novos usuários com suas configurações
+
+## 🛠️ Tecnologias
+
+- **Frontend:** React + TypeScript + Tailwind CSS
+- **Backend:** Node.js + Express + Socket.IO
+- **WhatsApp:** whatsapp-web.js
+- **Autenticação:** Sistema customizado
+- **Deploy:** Railway (configurado)
+
+## 📦 Deploy no Railway
+
+O projeto está configurado para deploy automático no Railway:
+
+1. Conecte seu repositório GitHub ao Railway
+2. O deploy acontece automaticamente
+3. Acesse a URL fornecida pelo Railway
+
+## 🔧 Configurações Avançadas
+
+### Variáveis de Ambiente
 ```bash
-npm run dev
+PORT=3002                    # Porta do servidor
+PUPPETEER_EXECUTABLE_PATH    # Caminho do Chrome (Railway)
 ```
 
-### Opção 3: Produção
-```bash
-npm run start
+### Estrutura de Arquivos
+```
+src/
+├── components/
+│   ├── Auth/               # Componentes de autenticação
+│   ├── Dashboard/          # Painéis administrativos
+│   ├── Layout/             # Layout da aplicação
+│   └── Modals/             # Modais do sistema
+├── contexts/
+│   └── AuthContext.tsx     # Contexto de autenticação
+├── hooks/
+│   └── useStore.ts         # Hook para gerenciar estado
+├── services/
+│   └── whatsappService.ts  # Serviço do WhatsApp
+└── types/
+    └── index.ts            # Tipos TypeScript
 ```
 
-## 📱 Como Conectar o WhatsApp
+## 🐛 Solução de Problemas
 
-1. **Acesse o painel:**
-   - Abra o navegador e vá para `http://localhost:3000`
-   - Ou se estiver usando produção: `http://localhost:3001`
+### Bot não conecta
+- Verifique se o QR Code foi escaneado
+- Reinicie o servidor se necessário
+- Verifique os logs no console
 
-2. **Conecte o WhatsApp:**
-   - No painel, vá para a seção "Conexão WhatsApp"
-   - Clique em "Conectar WhatsApp"
-   - Aguarde o QR Code aparecer
-   - Abra o WhatsApp no seu celular
-   - Vá em Configurações > Aparelhos conectados > Conectar um aparelho
-   - Escaneie o QR Code
+### Login não funciona
+- Use as credenciais padrão: `admin` / `admin123`
+- Verifique se o servidor está rodando
+- Limpe o cache do navegador
 
-3. **Pronto!**
-   - Seu bot estará conectado e pronto para receber pedidos
-   - As mensagens recebidas aparecerão automaticamente no painel
-
-## 🎯 Como Usar
-
-### Recebendo Pedidos
-- O bot responderá automaticamente às mensagens recebidas
-- Os pedidos aparecerão no painel "Pedidos"
-- Você pode gerenciar os status dos pedidos
-
-### Gerenciando Produtos
-- Vá para "Gerenciar Produtos" no painel
-- Adicione, edite ou remova produtos
-- Organize por categorias
-
-### Configurações
-- Personalize as informações da sua loja
-- Configure horários de funcionamento
-- Defina mensagens automáticas
-
-## 🔧 Estrutura do Projeto
-
-```
-project/
-├── src/
-│   ├── components/
-│   │   ├── Bot/           # Componentes do bot
-│   │   ├── Dashboard/     # Painel administrativo
-│   │   ├── Layout/        # Layout da aplicação
-│   │   ├── Modals/        # Modais
-│   │   └── WhatsApp/      # Componentes do WhatsApp
-│   ├── services/
-│   │   └── whatsappService.ts  # Serviço do WhatsApp
-│   ├── hooks/
-│   │   └── useStore.ts    # Hook para gerenciamento de estado
-│   └── types/
-│       └── index.ts       # Tipos TypeScript
-├── server.js              # Servidor backend
-├── package.json
-└── README.md
-```
-
-## 🛡️ Segurança
-
-- O WhatsApp Web usa autenticação local
-- Os dados de sessão ficam armazenados localmente
-- Não compartilhe os arquivos de autenticação
-
-## 🔍 Troubleshooting
-
-### Problemas Comuns
-
-1. **Erro ao conectar WhatsApp:**
-   - Verifique se o Chrome está instalado
-   - Certifique-se de que o servidor está rodando
-   - Tente desconectar e reconectar
-
-2. **QR Code não aparece:**
-   - Aguarde alguns segundos
-   - Verifique se o servidor está funcionando
-   - Recarregue a página
-
-3. **Bot não responde:**
-   - Verifique se o WhatsApp está conectado
-   - Confirme se o servidor está rodando
-   - Verifique os logs do console
-
-### Logs
-Para ver os logs do servidor, observe o terminal onde está rodando o `server.js`.
+### Deploy no Railway
+- Verifique os logs do Railway
+- Adicione variáveis de ambiente se necessário
+- Certifique-se de que o `package.json` está correto
 
 ## 📞 Suporte
 
-Se encontrar problemas:
-1. Verifique se todas as dependências estão instaladas
-2. Confirme se o Chrome está instalado
-3. Verifique os logs do servidor
-4. Tente reiniciar o servidor
-
-## 🔄 Atualizações
-
-Para atualizar o projeto:
-```bash
-git pull origin main
-npm install
-npm run dev:full
-```
+Para dúvidas ou problemas:
+1. Verifique os logs do console
+2. Consulte a documentação
+3. Abra uma issue no GitHub
 
 ## 📄 Licença
 
-Este projeto é de uso livre para fins comerciais e pessoais.
+Este projeto é de uso livre para fins educacionais e comerciais.
 
 ---
 
-**Desenvolvido com ❤️ para facilitar o gerenciamento de pedidos via WhatsApp** 
+**Desenvolvido com ❤️ para facilitar a gestão de bots WhatsApp** 

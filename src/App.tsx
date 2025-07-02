@@ -10,12 +10,14 @@ import { OrdersPanel } from './components/Dashboard/OrdersPanel';
 import { WhatsAppBot } from './components/Bot/WhatsAppBot';
 import { PrintModal } from './components/Modals/PrintModal';
 import { WhatsAppModal } from './components/Modals/WhatsAppModal';
+import { AuthProvider } from './contexts/AuthContext';
+import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { useStore } from './hooks/useStore';
 import { Category, Order, OrderItem } from './types';
 import { initializeWhatsApp, getWhatsAppClient } from './services/whatsappService';
 import { whatsappService } from './services/whatsappService';
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [botConnected, setBotConnected] = useState(false);
@@ -203,7 +205,8 @@ function App() {
         return (
           <StoreSettings
             config={storeConfig}
-            onUpdate={updateStoreConfig}
+            onUpdateConfig={updateStoreConfig}
+            onOpenWhatsAppSettings={handleOpenWhatsAppSettings}
           />
         );
       
@@ -213,17 +216,17 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="pl-64">
-        <Header
-          title={getPageTitle()}
-          onOpenWhatsAppSettings={handleOpenWhatsAppSettings}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header 
+          title={getPageTitle()} 
           botConnected={botConnected}
+          onWhatsAppConnectionChange={handleWhatsAppConnectionChange}
         />
         
-        <main className="p-6">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
           {renderContent()}
         </main>
       </div>
@@ -232,17 +235,26 @@ function App() {
         <PrintModal
           order={printOrder}
           onClose={() => setPrintOrder(null)}
-          storeName={storeConfig.name}
-          storeAddress={storeConfig.address}
         />
       )}
 
-      <WhatsAppModal
-        isOpen={showWhatsAppModal}
-        onClose={() => setShowWhatsAppModal(false)}
-        onConnectionChange={handleWhatsAppConnectionChange}
-      />
+      {showWhatsAppModal && (
+        <WhatsAppModal
+          onClose={() => setShowWhatsAppModal(false)}
+          onConnectionChange={handleWhatsAppConnectionChange}
+        />
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <AppContent />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
 

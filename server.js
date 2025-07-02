@@ -87,6 +87,80 @@ const customerSessions = new Map();
 // Pedidos
 let orders = [];
 
+// Dados de usuários (em produção, use um banco de dados)
+let users = [
+  {
+    id: '1',
+    username: 'admin',
+    email: 'admin@exemplo.com',
+    password: 'admin123', // Em produção, use hash bcrypt
+    storeConfig: {
+      name: 'Pizzaria Delícia',
+      greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
+      deliveryFee: 5.00,
+      pixKey: 'contato@pizzariadelicia.com.br',
+      address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
+      menuImage: 'https://exemplo.com/cardapio.jpg'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
+
+// Rotas de autenticação
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  const user = users.find(u => u.username === username && u.password === password);
+  
+  if (user) {
+    // Em produção, não envie a senha
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } else {
+    res.status(401).json({ message: 'Usuário ou senha inválidos' });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  // Em produção, verifique o token JWT
+  const userId = req.headers['user-id'];
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } else {
+    res.status(401).json({ message: 'Usuário não autenticado' });
+  }
+});
+
+// Rota para obter configurações do usuário
+app.get('/api/user/:userId/config', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    res.json(user.storeConfig);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para atualizar configurações do usuário
+app.put('/api/user/:userId/config', (req, res) => {
+  const { userId } = req.params;
+  const userIndex = users.findIndex(u => u.id === userId);
+  
+  if (userIndex !== -1) {
+    users[userIndex].storeConfig = { ...users[userIndex].storeConfig, ...req.body };
+    users[userIndex].updatedAt = new Date();
+    res.json(users[userIndex].storeConfig);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
 // Função para obter todos os produtos
 function getAllProducts() {
   return storeData.categories.flatMap(cat => cat.products);
@@ -787,6 +861,60 @@ app.post('/api/whatsapp/init', (req, res) => {
 
 app.post('/api/whatsapp/disconnect', (req, res) => {
   res.json({ success: true, message: 'Use Socket.IO para desconectar WhatsApp' });
+});
+
+// Rotas de autenticação
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body;
+  
+  const user = users.find(u => u.username === username && u.password === password);
+  
+  if (user) {
+    // Em produção, não envie a senha
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } else {
+    res.status(401).json({ message: 'Usuário ou senha inválidos' });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  // Em produção, verifique o token JWT
+  const userId = req.headers['user-id'];
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    const { password: _, ...userWithoutPassword } = user;
+    res.json(userWithoutPassword);
+  } else {
+    res.status(401).json({ message: 'Usuário não autenticado' });
+  }
+});
+
+// Rota para obter configurações do usuário
+app.get('/api/user/:userId/config', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    res.json(user.storeConfig);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para atualizar configurações do usuário
+app.put('/api/user/:userId/config', (req, res) => {
+  const { userId } = req.params;
+  const userIndex = users.findIndex(u => u.id === userId);
+  
+  if (userIndex !== -1) {
+    users[userIndex].storeConfig = { ...users[userIndex].storeConfig, ...req.body };
+    users[userIndex].updatedAt = new Date();
+    res.json(users[userIndex].storeConfig);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
 });
 
 server.listen(PORT, () => {
