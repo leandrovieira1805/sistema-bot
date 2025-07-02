@@ -404,9 +404,9 @@ app.put('/api/user/:userId/config', (req, res) => {
   }
 });
 
-// Rota raiz
+// Rota raiz (healthcheck para Railway)
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.status(200).json({ status: 'ok', message: 'Healthcheck by Railway', time: new Date().toISOString() });
 });
 
 // Socket.IO connection handling
