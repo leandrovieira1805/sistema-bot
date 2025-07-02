@@ -220,8 +220,8 @@ function AppContent() {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header 
-          title={getPageTitle()} 
+        <Header
+          title={getPageTitle()}
           botConnected={botConnected}
           onWhatsAppConnectionChange={handleWhatsAppConnectionChange}
         />
@@ -239,10 +239,10 @@ function AppContent() {
       )}
 
       {showWhatsAppModal && (
-        <WhatsAppModal
-          onClose={() => setShowWhatsAppModal(false)}
-          onConnectionChange={handleWhatsAppConnectionChange}
-        />
+      <WhatsAppModal
+        onClose={() => setShowWhatsAppModal(false)}
+        onConnectionChange={handleWhatsAppConnectionChange}
+      />
       )}
     </div>
   );
