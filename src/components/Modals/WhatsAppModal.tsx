@@ -20,8 +20,8 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
   const handleConnectionChange = (connected: boolean) => {
     onConnectionChange(connected);
     if (connected) {
-      setQrCode(null); // Limpa o QR ao conectar
-      onClose();
+      setQrCode(null);
+      setTimeout(onClose, 100); // Delay de 100ms para evitar erro de DOM
     }
   };
 
