@@ -21,7 +21,7 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
     onConnectionChange(connected);
     if (connected) {
       setQrCode(null);
-      setTimeout(onClose, 100); // Delay de 100ms para evitar erro de DOM
+      setTimeout(onClose, 300); // Delay de 300ms para evitar erro de DOM
     }
   };
 
