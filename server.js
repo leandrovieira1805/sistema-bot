@@ -866,68 +866,8 @@ app.post('/api/whatsapp/disconnect', (req, res) => {
   res.json({ success: true, message: 'Use Socket.IO para desconectar WhatsApp' });
 });
 
-// Rotas de autenticação
-app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body;
-  
-  const user = users.find(u => u.username === username && u.password === password);
-  
-  if (user) {
-    // Em produção, não envie a senha
-    const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
-  } else {
-    res.status(401).json({ message: 'Usuário ou senha inválidos' });
-  }
-});
-
-app.get('/api/auth/me', (req, res) => {
-  // Em produção, verifique o token JWT
-  const userId = req.headers['user-id'];
-  const user = users.find(u => u.id === userId);
-  
-  if (user) {
-    const { password: _, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
-  } else {
-    res.status(401).json({ message: 'Usuário não autenticado' });
-  }
-});
-
-// Rota para obter configurações do usuário
-app.get('/api/user/:userId/config', (req, res) => {
-  const { userId } = req.params;
-  const user = users.find(u => u.id === userId);
-  
-  if (user) {
-    res.json(user.storeConfig);
-  } else {
-    res.status(404).json({ message: 'Usuário não encontrado' });
-  }
-});
-
-// Rota para atualizar configurações do usuário
-app.put('/api/user/:userId/config', (req, res) => {
-  const { userId } = req.params;
-  const userIndex = users.findIndex(u => u.id === userId);
-  
-  if (userIndex !== -1) {
-    users[userIndex].storeConfig = { ...users[userIndex].storeConfig, ...req.body };
-    users[userIndex].updatedAt = new Date();
-    res.json(users[userIndex].storeConfig);
-  } else {
-    res.status(404).json({ message: 'Usuário não encontrado' });
-  }
-});
-
-// Rota para servir o index.html em todas as rotas do frontend (deve ser a última)
-app.get('*', (req, res) => {
-  // Se a requisição for para uma API, não servir o index.html
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ message: 'API endpoint not found' });
-  }
-  
-  // Para todas as outras rotas, servir o index.html (SPA)
+// Rota simples para servir o index.html
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
