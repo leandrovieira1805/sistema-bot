@@ -2,15 +2,11 @@ import express from 'express';
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import whatsapp from 'whatsapp-web.js';
-import qrcode from 'qrcode';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const { Client, LocalAuth } = whatsapp;
 
 const app = express();
 const server = createServer(app);
@@ -23,14 +19,10 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3002;
 
-// Configurações para funcionar no Railway
-app.set('trust proxy', 1);
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// Configurações básicas
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Middleware para logging
 app.use((req, res, next) => {
@@ -38,11 +30,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Servir arquivos estáticos do build
-app.use(express.static(path.join(__dirname, 'dist')));
-
 // Dados de usuários
-let users = [
+const users = [
   {
     id: '1',
     username: 'admin',
@@ -61,12 +50,7 @@ let users = [
   }
 ];
 
-// Variáveis do WhatsApp
-let whatsappClient = null;
-let isAuthenticated = false;
-let isInitializing = false;
-
-// Rota de teste para verificar se o servidor está funcionando
+// Rota de health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -76,7 +60,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Rotas de autenticação
+// Rota de login
 app.post('/api/auth/login', (req, res) => {
   console.log('Tentativa de login:', req.body);
   const { username, password } = req.body;
@@ -97,6 +81,7 @@ app.post('/api/auth/login', (req, res) => {
   }
 });
 
+// Rota para obter usuário atual
 app.get('/api/auth/me', (req, res) => {
   const userId = req.headers['user-id'];
   const user = users.find(u => u.id === userId);
@@ -135,79 +120,24 @@ app.put('/api/user/:userId/config', (req, res) => {
   }
 });
 
-// Rota para servir o index.html - deve ser a última rota
+// Rota raiz
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Rota catch-all para SPA - deve ser a última rota
-app.get('*', (req, res) => {
-  // Verificar se é uma requisição para API
-  if (req.path.startsWith('/api/')) {
-    return res.status(404).json({ message: 'API endpoint não encontrado' });
-  }
-  
-  // Para todas as outras rotas, servir o index.html
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// Socket.IO para WhatsApp
+// Socket.IO básico
 io.on('connection', (socket) => {
   console.log('Cliente conectado:', socket.id);
-
-  socket.on('init-whatsapp', async () => {
-    try {
-      if (isInitializing) return;
-      
-      isInitializing = true;
-      
-      whatsappClient = new Client({
-        authStrategy: new LocalAuth({
-          dataPath: './whatsapp_auth',
-        }),
-        puppeteer: {
-          headless: true,
-          args: ['--no-sandbox', '--disable-setuid-sandbox']
-        }
-      });
-
-      whatsappClient.on('qr', async (qr) => {
-        const qrCodeDataUrl = await qrcode.toDataURL(qr);
-        socket.emit('qr-code', qrCodeDataUrl);
-        socket.emit('whatsapp-status', { connected: false, status: 'qr_received' });
-      });
-
-      whatsappClient.on('ready', () => {
-        isAuthenticated = true;
-        isInitializing = false;
-        socket.emit('whatsapp-status', { connected: true, status: 'ready' });
-      });
-
-      whatsappClient.on('disconnected', () => {
-        whatsappClient = null;
-        isAuthenticated = false;
-        isInitializing = false;
-        socket.emit('whatsapp-status', { connected: false, status: 'disconnected' });
-      });
-
-      await whatsappClient.initialize();
-    } catch (error) {
-      console.error('Erro ao inicializar WhatsApp:', error);
-      isInitializing = false;
-      socket.emit('error', error.message);
-    }
-  });
 
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`=== SERVIDOR INICIADO ===`);
+// Iniciar servidor
+server.listen(PORT, () => {
+  console.log(`=== SERVIDOR RAILWAY INICIADO ===`);
   console.log(`Porta: ${PORT}`);
   console.log(`URL: http://localhost:${PORT}`);
-  console.log(`Frontend: http://localhost:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Railway URL: ${process.env.RAILWAY_STATIC_URL || 'N/A'}`);
 }); 
