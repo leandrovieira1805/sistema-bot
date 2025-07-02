@@ -1,4 +1,4 @@
-
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { WhatsAppConnection } from '../WhatsApp/WhatsAppConnection';
 
@@ -9,17 +9,19 @@ interface WhatsAppModalProps {
 }
 
 export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppModalProps) {
+  const [qrCode, setQrCode] = useState<string | null>(null);
+
   if (!isOpen) return null;
 
   const handleQRCode = (qr: string) => {
-    // QR Code gerado - pode ser usado para logs ou outras funcionalidades
-    console.log('QR Code gerado:', qr);
+    setQrCode(qr); // Salva o QR Code para exibir no modal
   };
 
   const handleConnectionChange = (connected: boolean) => {
     onConnectionChange(connected);
     if (connected) {
-      onClose(); // Fecha o modal automaticamente ao conectar
+      setQrCode(null); // Limpa o QR ao conectar
+      onClose();
     }
   };
 
@@ -41,6 +43,20 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
             onConnectionChange={handleConnectionChange}
             onQRCode={handleQRCode}
           />
+          {/* Exibe o QR Code em destaque se existir */}
+          {qrCode && (
+            <div className="flex flex-col items-center mt-6">
+              <img
+                src={qrCode}
+                alt="QR Code WhatsApp"
+                className="border border-gray-300 rounded-lg shadow-lg"
+                style={{ maxWidth: '350px', width: '100%' }}
+              />
+              <p className="mt-2 text-gray-700 text-center">
+                Escaneie este QR Code com o app do WhatsApp para conectar.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
