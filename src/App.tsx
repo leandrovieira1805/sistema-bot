@@ -205,8 +205,7 @@ function AppContent() {
         return (
           <StoreSettings
             config={storeConfig}
-            onUpdateConfig={updateStoreConfig}
-            onOpenWhatsAppSettings={handleOpenWhatsAppSettings}
+            onUpdate={updateStoreConfig}
           />
         );
       
@@ -217,7 +216,13 @@ function AppContent() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          if (tab === 'bot') setShowWhatsAppModal(true);
+        }}
+      />
       
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header
@@ -235,14 +240,17 @@ function AppContent() {
         <PrintModal
           order={printOrder}
           onClose={() => setPrintOrder(null)}
+          storeName={storeConfig.name}
+          storeAddress={storeConfig.address}
         />
       )}
 
       {showWhatsAppModal && (
-      <WhatsAppModal
-        onClose={() => setShowWhatsAppModal(false)}
-        onConnectionChange={handleWhatsAppConnectionChange}
-      />
+        <WhatsAppModal
+          isOpen={showWhatsAppModal}
+          onClose={() => setShowWhatsAppModal(false)}
+          onConnectionChange={handleWhatsAppConnectionChange}
+        />
       )}
     </div>
   );
