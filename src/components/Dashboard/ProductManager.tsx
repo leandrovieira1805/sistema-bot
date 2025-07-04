@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, ArrowLeft, Package, DollarSign } from 'lucide-react';
+import { Plus, Edit2, Trash2, ArrowLeft, Package, DollarSign, Image, Upload } from 'lucide-react';
 import { Category, Product } from '../../types';
 
 interface ProductManagerProps {
@@ -24,6 +24,7 @@ export function ProductManager({
     price: 0,
     image: ''
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +39,7 @@ export function ProductManager({
         });
       }
       setFormData({ name: '', price: 0, image: '' });
+      setImagePreview(null);
       setShowAddForm(false);
     }
   };
@@ -49,13 +51,21 @@ export function ProductManager({
       price: product.price,
       image: product.image
     });
+    setImagePreview(product.image || null);
     setShowAddForm(true);
   };
 
   const handleCancel = () => {
     setEditingId(null);
     setFormData({ name: '', price: 0, image: '' });
+    setImagePreview(null);
     setShowAddForm(false);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setFormData(prev => ({ ...prev, image: url }));
+    setImagePreview(url || null);
   };
 
   return (
@@ -90,46 +100,81 @@ export function ProductManager({
               {editingId ? 'Editar Produto' : 'Novo Produto'}
             </h4>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nome do Produto
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nome do Produto
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="Ex: Pizza Margherita"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preço (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    URL da Imagem
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="url"
+                      value={formData.image}
+                      onChange={handleImageChange}
+                      className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                      placeholder="https://exemplo.com/imagem.jpg"
+                    />
+                    <Image className="absolute right-3 top-2.5 text-gray-400" size={20} />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Cole aqui o link da imagem do produto
+                  </p>
+                </div>
               </div>
               
-              <div>
+              <div className="space-y-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Preço (R$)
+                  Preview da Imagem
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 h-64 flex items-center justify-center">
+                  {imagePreview ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-w-full max-h-full object-contain rounded-lg"
+                        onError={() => setImagePreview(null)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center text-gray-500">
+                      <Upload size={48} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">Imagem aparecerá aqui</p>
+                      <p className="text-xs">Cole o link da imagem no campo ao lado</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                URL da Imagem
-              </label>
-              <input
-                type="url"
-                value={formData.image}
-                onChange={(e) => setFormData(prev => ({ ...prev, image: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                placeholder="https://exemplo.com/imagem.jpg"
-              />
             </div>
             
             <div className="flex gap-3">
@@ -152,13 +197,29 @@ export function ProductManager({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {category.products.map((product) => (
-            <div key={product.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-              {product.image && (
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-48 object-cover"
-                />
+            <div key={product.id} className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              {product.image ? (
+                <div className="h-48 bg-gray-100 flex items-center justify-center">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling!.style.display = 'flex';
+                    }}
+                  />
+                  <div className="hidden items-center justify-center w-full h-full text-gray-400">
+                    <Image size={48} />
+                  </div>
+                </div>
+              ) : (
+                <div className="h-48 bg-gray-100 flex items-center justify-center">
+                  <div className="text-center text-gray-400">
+                    <Image size={48} className="mx-auto mb-2" />
+                    <p className="text-sm">Sem imagem</p>
+                  </div>
+                </div>
               )}
               
               <div className="p-4">

@@ -435,17 +435,41 @@ async function processCustomerMessage(message, contactName) {
   switch (session.step) {
     case 'greeting':
       if (text === '1' || text.includes('cardápio') || text.includes('cardapio')) {
-        response = 'Aqui está nosso cardápio! 🍕\n\n';
-        response += getAllProducts().map(product => 
-          `${product.name} - R$ ${product.price.toFixed(2)}`
-        ).join('\n');
-        response += '\n\nPara fazer um pedido, digite o nome do produto desejado.';
-        session.step = 'ordering';
+        // Enviar apenas a imagem do cardápio
         shouldSendImage = true;
         imageUrl = storeData.config.menuImage;
+        
+        // Enviar mensagem de aguardando pedido após a imagem
+        setTimeout(() => {
+          const waitingMessage = {
+            id: (Date.now() + 2).toString(),
+            type: 'bot',
+            content: 'Aguardando pedido... 😊\n\nDigite o nome do produto desejado.',
+            timestamp: new Date()
+          };
+          session.messages.push(waitingMessage);
+          customerSessions.set(phone, session);
+        }, 1000);
+        
+        session.step = 'ordering';
       } else if (text === '2' || text.includes('promoção') || text.includes('promocao')) {
-        response = 'Promoções da semana:\n🔥 Pizza + Bebida por R$ 50,00\n🎉 Delivery grátis em pedidos acima de R$ 60,00';
-        session.step = 'greeting';
+        // Enviar apenas a imagem das promoções
+        shouldSendImage = true;
+        imageUrl = storeData.config.promotionImage || storeData.config.menuImage;
+        
+        // Enviar mensagem de aguardando pedido após a imagem
+        setTimeout(() => {
+          const waitingMessage = {
+            id: (Date.now() + 2).toString(),
+            type: 'bot',
+            content: 'Aguardando pedido... 😊\n\nDigite o nome do produto desejado.',
+            timestamp: new Date()
+          };
+          session.messages.push(waitingMessage);
+          customerSessions.set(phone, session);
+        }, 1000);
+        
+        session.step = 'ordering';
       } else {
         response = storeData.config.greeting;
       }
