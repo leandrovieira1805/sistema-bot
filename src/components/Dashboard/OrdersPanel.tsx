@@ -1,4 +1,3 @@
-import React from 'react';
 import { Printer, Clock, CheckCircle, Package, MapPin, DollarSign } from 'lucide-react';
 import { Order } from '../../types';
 

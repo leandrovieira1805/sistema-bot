@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { Image, Upload, Save, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface MenuManagerProps {
   menuImage: string;
