@@ -116,6 +116,225 @@ const customerSessions = new Map();
 // Pedidos
 let orders = [];
 
+// Sistema de IA para correção de digitações e reconhecimento
+class AIProductMatcher {
+  constructor() {
+    // Dicionário de números por extenso
+    this.numberWords = {
+      'zero': 0, 'um': 1, 'uma': 1, 'dois': 2, 'duas': 2, 'tres': 3, 'três': 3,
+      'quatro': 4, 'cinco': 5, 'seis': 6, 'sete': 7, 'oito': 8, 'nove': 9, 'dez': 10,
+      'onze': 11, 'doze': 12, 'treze': 13, 'quatorze': 14, 'catorze': 14, 'quinze': 15,
+      'dezesseis': 16, 'dezessete': 17, 'dezoito': 18, 'dezenove': 19, 'vinte': 20,
+      'trinta': 30, 'quarenta': 40, 'cinquenta': 50, 'sessenta': 60, 'setenta': 70,
+      'oitenta': 80, 'noventa': 90, 'cem': 100, 'cento': 100, 'mil': 1000
+    };
+
+    // Palavras comuns que podem ser ignoradas
+    this.stopWords = ['quero', 'gostaria', 'desejo', 'pedir', 'pedido', 'por', 'favor', 'me', 'dê', 'de', 'uma', 'um', 'dois', 'tres', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'];
+    
+    // Correções comuns de digitação
+    this.commonTypos = {
+      'piza': 'pizza', 'piza': 'pizza', 'pizz': 'pizza', 'pizzza': 'pizza',
+      'hamburguer': 'hambúrguer', 'hamburguer': 'hambúrguer', 'hamburguer': 'hambúrguer',
+      'refrigerante': 'refrigerante', 'refri': 'refrigerante', 'refrigerante': 'refrigerante',
+      'batata': 'batata frita', 'batatas': 'batata frita', 'fritas': 'batata frita',
+      'suco': 'suco natural', 'sucos': 'suco natural', 'natural': 'suco natural',
+      'sobremesa': 'sobremesa', 'sobremesas': 'sobremesa', 'doce': 'sobremesa',
+      'salada': 'salada', 'saladas': 'salada', 'verdura': 'salada'
+    };
+  }
+
+  // Calcular similaridade entre duas strings (algoritmo de Levenshtein)
+  calculateSimilarity(str1, str2) {
+    const matrix = [];
+    const len1 = str1.length;
+    const len2 = str2.length;
+
+    for (let i = 0; i <= len2; i++) {
+      matrix[i] = [i];
+    }
+
+    for (let j = 0; j <= len1; j++) {
+      matrix[0][j] = j;
+    }
+
+    for (let i = 1; i <= len2; i++) {
+      for (let j = 1; j <= len1; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+
+    const maxLen = Math.max(len1, len2);
+    return maxLen === 0 ? 1 : (maxLen - matrix[len2][len1]) / maxLen;
+  }
+
+  // Normalizar texto removendo acentos e caracteres especiais
+  normalizeText(text) {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Extrair números do texto
+  extractNumbers(text) {
+    const normalizedText = this.normalizeText(text);
+    const words = normalizedText.split(' ');
+    const numbers = [];
+    let currentNumber = 0;
+
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      
+      if (this.numberWords[word] !== undefined) {
+        const num = this.numberWords[word];
+        if (num >= 100) {
+          currentNumber = currentNumber * num;
+        } else if (num >= 10 && num % 10 === 0) {
+          currentNumber = currentNumber + num;
+        } else {
+          currentNumber = currentNumber + num;
+        }
+      } else if (/\d+/.test(word)) {
+        numbers.push(parseInt(word));
+      } else if (currentNumber > 0) {
+        numbers.push(currentNumber);
+        currentNumber = 0;
+      }
+    }
+
+    if (currentNumber > 0) {
+      numbers.push(currentNumber);
+    }
+
+    return numbers;
+  }
+
+  // Corrigir digitações comuns
+  correctCommonTypos(text) {
+    const normalizedText = this.normalizeText(text);
+    let correctedText = normalizedText;
+
+    for (const [typo, correction] of Object.entries(this.commonTypos)) {
+      correctedText = correctedText.replace(new RegExp(`\\b${typo}\\b`, 'g'), correction);
+    }
+
+    return correctedText;
+  }
+
+  // Encontrar produto com IA
+  findProductWithAI(inputText, products) {
+    const normalizedInput = this.normalizeText(inputText);
+    const correctedInput = this.correctCommonTypos(normalizedInput);
+    
+    // Extrair números do input
+    const numbers = this.extractNumbers(inputText);
+    
+    // Remover palavras irrelevantes
+    const relevantWords = correctedInput
+      .split(' ')
+      .filter(word => !this.stopWords.includes(word) && word.length > 2)
+      .join(' ');
+
+    let bestMatch = null;
+    let bestScore = 0;
+    let suggestions = [];
+
+    for (const product of products) {
+      const normalizedProductName = this.normalizeText(product.name);
+      
+      // Calcular similaridade com o nome do produto
+      const nameSimilarity = this.calculateSimilarity(relevantWords, normalizedProductName);
+      
+      // Verificar se há palavras-chave do produto no input
+      const productWords = normalizedProductName.split(' ');
+      const inputWords = relevantWords.split(' ');
+      let keywordMatches = 0;
+      
+      for (const productWord of productWords) {
+        for (const inputWord of inputWords) {
+          if (this.calculateSimilarity(productWord, inputWord) > 0.7) {
+            keywordMatches++;
+          }
+        }
+      }
+      
+      const keywordScore = keywordMatches / Math.max(productWords.length, 1);
+      
+      // Score final combinando similaridade e palavras-chave
+      const finalScore = (nameSimilarity * 0.6) + (keywordScore * 0.4);
+      
+      if (finalScore > bestScore) {
+        bestScore = finalScore;
+        bestMatch = product;
+      }
+      
+      // Adicionar sugestões para produtos com score > 0.3
+      if (finalScore > 0.3) {
+        suggestions.push({
+          product,
+          score: finalScore,
+          reason: finalScore > 0.7 ? 'Correspondência exata' : 'Produto similar'
+        });
+      }
+    }
+
+    // Ordenar sugestões por score
+    suggestions.sort((a, b) => b.score - a.score);
+
+    return {
+      bestMatch: bestScore > 0.5 ? bestMatch : null,
+      suggestions: suggestions.slice(0, 3),
+      confidence: bestScore,
+      numbers: numbers,
+      correctedInput: correctedInput
+    };
+  }
+
+  // Gerar resposta inteligente
+  generateSmartResponse(aiResult, products) {
+    if (aiResult.bestMatch) {
+      return {
+        success: true,
+        product: aiResult.bestMatch,
+        message: `✅ ${aiResult.bestMatch.name} encontrado!`,
+        confidence: aiResult.confidence
+      };
+    } else if (aiResult.suggestions.length > 0) {
+      const suggestions = aiResult.suggestions
+        .map(s => `${s.product.name}`)
+        .join(', ');
+      
+      return {
+        success: false,
+        message: `Não encontrei "${aiResult.correctedInput}". Você quis dizer: ${suggestions}?`,
+        suggestions: aiResult.suggestions,
+        confidence: aiResult.confidence
+      };
+    } else {
+      return {
+        success: false,
+        message: `Produto "${aiResult.correctedInput}" não encontrado. Digite "cardápio" para ver nossas opções.`,
+        confidence: 0
+      };
+    }
+  }
+}
+
+// Instanciar o sistema de IA
+const aiMatcher = new AIProductMatcher();
+
 // Função para limpar sessão do WhatsApp
 async function clearWhatsAppSession() {
   try {
@@ -156,13 +375,30 @@ function getAllProducts() {
   return storeData.categories.flatMap(cat => cat.products);
 }
 
-// Função para encontrar produto por nome
+// Função para encontrar produto por nome (com IA)
 function findProductByName(name) {
   const products = getAllProducts();
-  return products.find(product => 
+  
+  // Usar o sistema de IA para encontrar o produto
+  const aiResult = aiMatcher.findProductWithAI(name, products);
+  
+  // Se encontrou um produto com alta confiança, retornar
+  if (aiResult.bestMatch) {
+    console.log(`IA encontrou produto: "${aiResult.bestMatch.name}" (confiança: ${(aiResult.confidence * 100).toFixed(1)}%)`);
+    return aiResult.bestMatch;
+  }
+  
+  // Fallback para o método antigo se a IA não encontrar
+  const fallbackResult = products.find(product => 
     product.name.toLowerCase().includes(name.toLowerCase()) ||
     name.toLowerCase().includes(product.name.toLowerCase())
   );
+  
+  if (fallbackResult) {
+    console.log(`Fallback encontrou produto: "${fallbackResult.name}"`);
+  }
+  
+  return fallbackResult;
 }
 
 // Função para calcular total do carrinho
@@ -216,20 +452,28 @@ async function processCustomerMessage(message, contactName) {
       break;
 
     case 'ordering':
-      const product = findProductByName(text);
-      if (product) {
+      // Usar IA para encontrar produto
+      const aiResult = aiMatcher.findProductWithAI(text, getAllProducts());
+      
+      if (aiResult.bestMatch) {
+        const product = aiResult.bestMatch;
         const existingItem = session.cart.find(item => item.product.id === product.id);
+        
+        // Verificar se há números no texto para quantidade
+        const numbers = aiResult.numbers;
+        const quantity = numbers.length > 0 ? numbers[0] : 1;
+        
         if (existingItem) {
-          existingItem.quantity += 1;
+          existingItem.quantity += quantity;
         } else {
           session.cart.push({
             product,
-            quantity: 1
+            quantity: quantity
           });
         }
         
         const cartTotal = calculateCartTotal(session.cart);
-        response = `✅ ${product.name} adicionado ao carrinho!\n\n`;
+        response = `✅ ${product.name} x${quantity} adicionado ao carrinho!\n\n`;
         response += `Carrinho atual:\n`;
         response += session.cart.map(item => 
           `${item.product.name} x${item.quantity} - R$ ${(item.product.price * item.quantity).toFixed(2)}`
@@ -253,7 +497,14 @@ async function processCustomerMessage(message, contactName) {
           session.step = 'customer_info';
         }
       } else {
-        response = 'Produto não encontrado. Digite o nome correto do produto ou "finalizar" para concluir o pedido.';
+        // Gerar resposta inteligente com sugestões
+        const smartResponse = aiMatcher.generateSmartResponse(aiResult, getAllProducts());
+        response = smartResponse.message;
+        
+        // Se há sugestões, adicionar ao histórico para referência
+        if (smartResponse.suggestions && smartResponse.suggestions.length > 0) {
+          session.suggestions = smartResponse.suggestions.map(s => s.product.name);
+        }
       }
       break;
 
@@ -376,6 +627,28 @@ app.get('/api/auth/me', (req, res) => {
   } else {
     res.status(401).json({ message: 'Usuário não autenticado' });
   }
+});
+
+// Rota para testar o sistema de IA
+app.post('/api/ai/test', (req, res) => {
+  const { text } = req.body;
+  
+  if (!text) {
+    return res.status(400).json({ message: 'Texto é obrigatório' });
+  }
+  
+  const products = getAllProducts();
+  const aiResult = aiMatcher.findProductWithAI(text, products);
+  const smartResponse = aiMatcher.generateSmartResponse(aiResult, products);
+  
+  res.json({
+    input: text,
+    normalized: aiMatcher.normalizeText(text),
+    corrected: aiMatcher.correctCommonTypos(aiMatcher.normalizeText(text)),
+    numbers: aiResult.numbers,
+    aiResult: aiResult,
+    response: smartResponse
+  });
 });
 
 // Rota para obter configurações do usuário

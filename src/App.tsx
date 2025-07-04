@@ -8,6 +8,7 @@ import { ProductManager } from './components/Dashboard/ProductManager';
 import { PromotionManager } from './components/Dashboard/PromotionManager';
 import { OrdersPanel } from './components/Dashboard/OrdersPanel';
 import { WhatsAppBot } from './components/Bot/WhatsAppBot';
+import { AITester } from './components/Dashboard/AITester';
 import { PrintModal } from './components/Modals/PrintModal';
 import { WhatsAppModal } from './components/Modals/WhatsAppModal';
 import { AuthProvider } from './contexts/AuthContext';
@@ -91,6 +92,7 @@ function AppContent() {
       case 'promotions': return 'Promoções';
       case 'orders': return 'Pedidos';
       case 'bot': return 'Simulador Bot WhatsApp';
+      case 'ai-tester': return 'Testador de IA';
       case 'settings': return 'Configurações da Loja';
       default: return 'Dashboard';
     }
@@ -198,6 +200,13 @@ function AppContent() {
             sessions={customerSessions}
             onUpdateSession={updateSession}
             onCreateOrder={handleCreateOrder}
+          />
+        );
+      
+      case 'ai-tester':
+        return (
+          <AITester
+            onBack={() => setActiveTab('dashboard')}
           />
         );
       

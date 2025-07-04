@@ -6,6 +6,7 @@ import {
   Gift, 
   ClipboardList, 
   MessageSquare, 
+  Brain,
   Settings 
 } from 'lucide-react';
 
@@ -21,6 +22,7 @@ const menuItems = [
   { id: 'promotions', label: 'Promoções', icon: Gift },
   { id: 'orders', label: 'Pedidos', icon: ClipboardList },
   { id: 'bot', label: 'Bot WhatsApp', icon: MessageSquare },
+  { id: 'ai-tester', label: 'Testador IA', icon: Brain },
   { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 
