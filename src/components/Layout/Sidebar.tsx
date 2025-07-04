@@ -17,7 +17,8 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Store },
-  { id: 'categories', label: 'Cardápios', icon: Menu },
+  { id: 'menu', label: 'Cardápio', icon: Menu },
+  { id: 'categories', label: 'Categorias', icon: Package },
   { id: 'products', label: 'Produtos', icon: Package },
   { id: 'promotions', label: 'Promoções', icon: Gift },
   { id: 'orders', label: 'Pedidos', icon: ClipboardList },

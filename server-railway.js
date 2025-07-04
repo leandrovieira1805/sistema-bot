@@ -721,6 +721,21 @@ io.on('connection', (socket) => {
     status: isConnected ? 'ready' : 'disconnected' 
   });
 
+  // Atualizar dados da loja
+  socket.on('update-store-data', (data) => {
+    console.log('Atualizando dados da loja:', data);
+    if (data.config) {
+      storeData.config = { ...storeData.config, ...data.config };
+    }
+    if (data.categories) {
+      storeData.categories = data.categories;
+    }
+    if (data.promotions) {
+      storeData.promotions = data.promotions;
+    }
+    console.log('Dados da loja atualizados:', storeData);
+  });
+
   // Inicializar WhatsApp
   socket.on('init-whatsapp', async () => {
     try {

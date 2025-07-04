@@ -5,6 +5,7 @@ import { Dashboard } from './components/Dashboard/Dashboard';
 import { StoreSettings } from './components/Dashboard/StoreSettings';
 import { CategoryManager } from './components/Dashboard/CategoryManager';
 import { ProductManager } from './components/Dashboard/ProductManager';
+import { MenuManager } from './components/Dashboard/MenuManager';
 import { PromotionManager } from './components/Dashboard/PromotionManager';
 import { OrdersPanel } from './components/Dashboard/OrdersPanel';
 import { WhatsAppBot } from './components/Bot/WhatsAppBot';
@@ -48,6 +49,10 @@ function AppContent() {
     getAllProducts
   } = useStore();
 
+  const handleUpdateMenuImage = (imageUrl: string) => {
+    updateStoreConfig({ menuImage: imageUrl });
+  };
+
   useEffect(() => {
     function initIfConnected() {
       initializeWhatsApp(
@@ -87,6 +92,7 @@ function AppContent() {
   const getPageTitle = () => {
     switch (activeTab) {
       case 'dashboard': return 'Dashboard';
+      case 'menu': return 'Imagem do Cardápio';
       case 'categories': return 'Gestão de Categorias';
       case 'products': return selectedCategory ? `Produtos - ${selectedCategory.name}` : 'Produtos';
       case 'promotions': return 'Promoções';
@@ -141,6 +147,14 @@ function AppContent() {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard orders={orders} categories={categories} />;
+      
+      case 'menu':
+        return (
+          <MenuManager
+            menuImage={storeConfig.menuImage}
+            onUpdateMenuImage={handleUpdateMenuImage}
+          />
+        );
       
       case 'categories':
         return (

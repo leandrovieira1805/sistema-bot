@@ -4,6 +4,7 @@ export interface StoreConfig {
   deliveryFee: number;
   pixKey: string;
   address: string;
+  menuImage: string;
 }
 
 export interface Product {
