@@ -238,6 +238,7 @@ function AppContent() {
           title={getPageTitle()}
           botConnected={botConnected}
           onWhatsAppConnectionChange={handleWhatsAppConnectionChange}
+          onOpenWhatsAppSettings={handleOpenWhatsAppSettings}
         />
         
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">

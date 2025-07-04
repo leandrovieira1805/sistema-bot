@@ -6,15 +6,11 @@ interface HeaderProps {
   title: string;
   botConnected: boolean;
   onWhatsAppConnectionChange: (connected: boolean) => void;
+  onOpenWhatsAppSettings: () => void;
 }
 
-export function Header({ title, botConnected, onWhatsAppConnectionChange }: HeaderProps) {
+export function Header({ title, botConnected, onWhatsAppConnectionChange, onOpenWhatsAppSettings }: HeaderProps) {
   const { user, logout } = useAuth();
-
-  const handleOpenWhatsAppSettings = () => {
-    // Implementar abertura do modal WhatsApp
-    console.log('Abrir configurações WhatsApp');
-  };
 
   return (
     <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
@@ -32,7 +28,7 @@ export function Header({ title, botConnected, onWhatsAppConnectionChange }: Head
           </div>
           
           <button
-            onClick={handleOpenWhatsAppSettings}
+            onClick={onOpenWhatsAppSettings}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
             <Settings size={18} />
