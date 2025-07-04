@@ -146,7 +146,7 @@ function AppContent() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard orders={orders} categories={categories} />;
+        return <Dashboard orders={orders} categories={categories} onTabChange={setActiveTab} />;
       
       case 'menu':
         return (

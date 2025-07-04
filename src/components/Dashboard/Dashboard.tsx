@@ -13,9 +13,10 @@ import { Order, Category } from '../../types';
 interface DashboardProps {
   orders: Order[];
   categories: Category[];
+  onTabChange: (tab: string) => void;
 }
 
-export function Dashboard({ orders, categories }: DashboardProps) {
+export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const totalProducts = categories.reduce((sum, category) => sum + category.products.length, 0);
   const todayOrders = orders.filter(order => {
@@ -161,17 +162,26 @@ export function Dashboard({ orders, categories }: DashboardProps) {
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Ações Rápidas</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-green-500 hover:bg-green-50 transition-colors">
+          <button
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-green-500 hover:bg-green-50 transition-colors"
+            onClick={() => onTabChange('products')}
+          >
             <Package className="mx-auto mb-2 text-gray-400" size={24} />
             <p className="text-sm font-medium text-gray-600">Adicionar Produto</p>
           </button>
           
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-blue-500 hover:bg-blue-50 transition-colors">
+          <button
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-blue-500 hover:bg-blue-50 transition-colors"
+            onClick={() => onTabChange('orders')}
+          >
             <ShoppingBag className="mx-auto mb-2 text-gray-400" size={24} />
             <p className="text-sm font-medium text-gray-600">Ver Pedidos</p>
           </button>
           
-          <button className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-purple-500 hover:bg-purple-50 transition-colors">
+          <button
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-purple-500 hover:bg-purple-50 transition-colors"
+            onClick={() => onTabChange('bot')}
+          >
             <Users className="mx-auto mb-2 text-gray-400" size={24} />
             <p className="text-sm font-medium text-gray-600">Configurar Bot</p>
           </button>
