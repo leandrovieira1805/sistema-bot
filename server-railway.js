@@ -59,6 +59,22 @@ const users = [
     },
     createdAt: new Date(),
     updatedAt: new Date()
+  },
+  {
+    id: '2',
+    username: 'evellyn.nsouza',
+    email: 'evellynlavinian@gmail.com',
+    password: 'evellyn.nsouza',
+    storeConfig: {
+      name: 'Loja da Evellyn',
+      greeting: 'Olá! Bem-vindo à loja da Evellyn. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
+      deliveryFee: 7.00,
+      pixKey: 'evellyn@pix.com',
+      address: 'Rua da Evellyn, 456 - Centro - Cidade Exemplo',
+      menuImage: 'https://exemplo.com/cardapio-evellyn.jpg'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ];
 
