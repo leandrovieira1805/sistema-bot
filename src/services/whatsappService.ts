@@ -5,12 +5,18 @@ const SOCKET_URL = window.location.origin;
 class WhatsAppService {
   private socket: Socket | null = null;
   private callbacks: {
-    onQR?: (qr: string) => void;
-    onReady?: () => void;
-    onDisconnected?: () => void;
-    onMessage?: (message: any) => void;
-    onError?: (error: string) => void;
-  } = {};
+    onQR: (qr: string) => void;
+    onReady: () => void;
+    onDisconnected: () => void;
+    onMessage: (message: any) => void;
+    onError: (error: string) => void;
+  } = {
+    onQR: () => console.log('Callback onQR não fornecido'),
+    onReady: () => console.log('Callback onReady não fornecido'),
+    onDisconnected: () => console.log('Callback onDisconnected não fornecido'),
+    onMessage: () => console.log('Callback onMessage não fornecido'),
+    onError: (error: string) => console.error('Erro não tratado:', error)
+  };
 
   constructor() {
     this.connect();
@@ -36,23 +42,19 @@ class WhatsAppService {
       console.log('QR Code válido?', !!qrCodeDataUrl && qrCodeDataUrl.length > 100);
       console.log('Primeiros 50 chars:', qrCodeDataUrl?.substring(0, 50) + '...');
       
-      if (this.callbacks.onQR) {
-        console.log('Chamando callback onQR...');
-        this.callbacks.onQR(qrCodeDataUrl);
-        console.log('Callback onQR executado');
-      } else {
-        console.error('❌ Callback onQR não definido!');
-      }
+      // Sempre chamar o callback (agora sempre definido)
+      console.log('Chamando callback onQR...');
+      this.callbacks.onQR(qrCodeDataUrl);
+      console.log('Callback onQR executado');
     });
 
     this.socket.on('whatsapp-status', (status: { connected: boolean; status: string }) => {
       console.log('📱 Status WhatsApp recebido:', status);
-      if (status.connected && this.callbacks.onReady) {
+      if (status.connected) {
         console.log('Chamando callback onReady...');
         this.callbacks.onReady();
       } else if (
         !status.connected &&
-        this.callbacks.onDisconnected &&
         status.status !== 'qr_received' &&
         status.status !== 'initializing'
       ) {
@@ -63,16 +65,12 @@ class WhatsAppService {
 
     this.socket.on('message-received', (message: any) => {
       console.log('📨 Mensagem recebida:', message);
-      if (this.callbacks.onMessage) {
-        this.callbacks.onMessage(message);
-      }
+      this.callbacks.onMessage(message);
     });
 
     this.socket.on('error', (error: string) => {
       console.error('❌ Erro do servidor:', error);
-      if (this.callbacks.onError) {
-        this.callbacks.onError(error);
-      }
+      this.callbacks.onError(error);
     });
   }
 
@@ -94,7 +92,14 @@ class WhatsAppService {
       onError: !!onError 
     });
     
-    this.callbacks = { onQR, onReady, onDisconnected, onMessage, onError };
+    // Atualizar callbacks com os fornecidos ou manter os padrões
+    this.callbacks = { 
+      onQR: onQR || this.callbacks.onQR,
+      onReady: onReady || this.callbacks.onReady,
+      onDisconnected: onDisconnected || this.callbacks.onDisconnected,
+      onMessage: onMessage || this.callbacks.onMessage,
+      onError: onError || this.callbacks.onError
+    };
     
     if (this.socket && this.socket.connected) {
       console.log('✅ Socket conectado, emitindo init-whatsapp...');
