@@ -10,7 +10,6 @@ export const UserManager: React.FC<UserManagerProps> = ({ onClose }) => {
   const [users, setUsers] = useState<UserType[]>([]);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [newUser, setNewUser] = useState({
-    username: '',
     email: '',
     password: ''
   });
@@ -46,7 +45,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ onClose }) => {
       });
 
       if (response.ok) {
-        setNewUser({ username: '', email: '', password: '' });
+        setNewUser({ email: '', password: '' });
         setShowNewUserForm(false);
         loadUsers();
       }
@@ -121,14 +120,6 @@ export const UserManager: React.FC<UserManagerProps> = ({ onClose }) => {
               <form onSubmit={handleCreateUser} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <input
-                    type="text"
-                    placeholder="Usuário"
-                    value={newUser.username}
-                    onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                  <input
                     type="email"
                     placeholder="Email"
                     value={newUser.email}
@@ -173,12 +164,6 @@ export const UserManager: React.FC<UserManagerProps> = ({ onClose }) => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <input
-                        type="text"
-                        value={editingUser.username}
-                        onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                      <input
                         type="email"
                         value={editingUser.email}
                         onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
@@ -215,8 +200,7 @@ export const UserManager: React.FC<UserManagerProps> = ({ onClose }) => {
                         <User className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium text-gray-900">{user.username}</h4>
-                        <p className="text-sm text-gray-500">{user.email}</p>
+                        <h4 className="font-medium text-gray-900">{user.email}</h4>
                         <p className="text-xs text-gray-400">
                           Criado em: {new Date(user.createdAt).toLocaleDateString()}
                         </p>

@@ -17,7 +17,7 @@ export interface User {
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -27,7 +27,7 @@ class AuthService {
   async login(credentials: LoginCredentials): Promise<User> {
     try {
       console.log('Tentando login em:', `${API_BASE_URL}/api/auth/login`);
-      console.log('Credenciais:', { username: credentials.username, password: '***' });
+      console.log('Credenciais:', { email: credentials.email, password: '***' });
       
       const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',

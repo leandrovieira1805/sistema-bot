@@ -3,19 +3,19 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Lock, User, Eye, EyeOff } from 'lucide-react';
 
 export const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       alert('Por favor, preencha todos os campos');
       return;
     }
 
-    const success = await login({ username, password });
+    const success = await login({ email, password });
     if (!success) {
       setPassword('');
     }
@@ -40,22 +40,22 @@ export const Login: React.FC = () => {
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                  Usuário
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                  Email
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
-                    id="username"
-                    name="username"
-                    type="text"
+                    id="email"
+                    name="email"
+                    type="email"
                     required
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                    placeholder="Digite seu usuário"
+                    placeholder="Digite seu email"
                   />
                 </div>
               </div>

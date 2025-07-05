@@ -119,7 +119,9 @@ function AppContent() {
     if (!session || session.cart.length === 0) return;
 
     const subtotal = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
-    const total = subtotal + storeConfig.deliveryFee;
+    const isDelivery = session.customerData?.deliveryType === 'delivery';
+    const deliveryFee = isDelivery ? storeConfig.deliveryFee : 0;
+    const total = subtotal + deliveryFee;
     const change = session.customerData?.cashAmount ? session.customerData.cashAmount - total : undefined;
 
     const newOrder: Omit<Order, 'id' | 'createdAt'> = {
@@ -127,9 +129,10 @@ function AppContent() {
       customerPhone: session.phone,
       items: session.cart,
       subtotal,
-      deliveryFee: storeConfig.deliveryFee,
+      deliveryFee,
       total,
       address: session.customerData?.address,
+      deliveryType: session.customerData?.deliveryType,
       paymentMethod: session.customerData?.paymentMethod || 'PIX',
       cashAmount: session.customerData?.cashAmount,
       change,

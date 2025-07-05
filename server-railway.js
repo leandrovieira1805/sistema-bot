@@ -62,7 +62,7 @@ const users = [
   },
   {
     id: '2',
-    username: 'evellyn.nsouza',
+    username: 'evellynlavinian',
     email: 'evellynlavinian@gmail.com',
     password: 'evellyn.nsouza',
     storeConfig: {
@@ -81,44 +81,101 @@ const users = [
 // Dados da loja
 let storeData = {
   config: {
-    name: 'Pizzaria Delícia',
-    greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
-    deliveryFee: 5.00,
-    pixKey: 'contato@pizzariadelicia.com.br',
-    address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
-    menuImage: 'https://exemplo.com/cardapio.jpg'
+    name: 'Bebidas Delícia',
+    greeting: 'Olá! Seja bem-vindo à Bebidas Delícia. Digite o número da opção desejada:\n1. Ver Catálogo de Bebidas 🥤\n2. Ver Promoções 🔥',
+    deliveryFee: 3.00,
+    pixKey: 'contato@bebidasdelicia.com.br',
+    address: 'Rua das Bebidas, 123 - Centro - Cidade Exemplo',
+    menuImage: 'https://exemplo.com/cardapio-bebidas.jpg'
   },
   categories: [
     {
       id: '1',
-      name: 'Pizzas',
+      name: 'Cervejas',
       products: [
         {
           id: '1',
-          name: 'Pizza de Calabresa',
-          price: 45.50,
-          image: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '1'
+          name: 'Heineken',
+          price: 4.50,
+          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+          categoryId: '1',
+          unit: 'pack',
+          unitLabel: 'fardo',
+          packSize: 12,
+          packPrice: 45.00,
+          unitPrice: 4.50
         },
         {
           id: '2', 
-          name: 'Pizza Margherita',
-          price: 42.00,
-          image: 'https://images.pexels.com/photos/2147491/pexels-photo-2147491.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '1'
+          name: 'Brahma',
+          price: 3.00,
+          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+          categoryId: '1',
+          unit: 'pack',
+          unitLabel: 'fardo',
+          packSize: 12,
+          packPrice: 30.00,
+          unitPrice: 3.00
         }
       ]
     },
     {
       id: '2',
-      name: 'Bebidas',
+      name: 'Refrigerantes',
       products: [
         {
           id: '3',
           name: 'Coca-Cola 2L',
           price: 8.00,
           image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '2'
+          categoryId: '2',
+          unit: 'pack',
+          unitLabel: 'fardo',
+          packSize: 6,
+          packPrice: 42.00,
+          unitPrice: 8.00
+        },
+        {
+          id: '4',
+          name: 'Pepsi 2L',
+          price: 7.50,
+          image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+          categoryId: '2',
+          unit: 'pack',
+          unitLabel: 'fardo',
+          packSize: 6,
+          packPrice: 39.00,
+          unitPrice: 7.50
+        }
+      ]
+    },
+    {
+      id: '3',
+      name: 'Bebidas Especiais',
+      products: [
+        {
+          id: '5',
+          name: 'Red Bull 250ml',
+          price: 12.00,
+          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+          categoryId: '3',
+          unit: 'unit',
+          unitLabel: 'unidade',
+          packSize: 1,
+          packPrice: 0,
+          unitPrice: 12.00
+        },
+        {
+          id: '6',
+          name: 'Água Crystal 500ml',
+          price: 2.50,
+          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+          categoryId: '3',
+          unit: 'pack',
+          unitLabel: 'fardo',
+          packSize: 12,
+          packPrice: 25.00,
+          unitPrice: 2.50
         }
       ]
     }
@@ -419,7 +476,17 @@ function findProductByName(name) {
 
 // Função para calcular total do carrinho
 function calculateCartTotal(cart) {
-  const subtotal = cart.reduce((total, item) => total + (item.product.price * item.quantity), 0);
+  const getProductPrice = (product) => {
+    if (product.packPrice && product.packPrice > 0) {
+      return product.packPrice;
+    } else if (product.unitPrice && product.unitPrice > 0) {
+      return product.unitPrice;
+    } else {
+      return product.price;
+    }
+  };
+
+  const subtotal = cart.reduce((total, item) => total + (getProductPrice(item.product) * item.quantity), 0);
   const deliveryFee = storeData.config.deliveryFee;
   return {
     subtotal,
@@ -469,23 +536,7 @@ async function processCustomerMessage(message, contactName) {
         
         session.step = 'ordering';
       } else if (text === '2' || text.includes('promoção') || text.includes('promocao')) {
-        // Enviar apenas a imagem das promoções
-        shouldSendImage = true;
-        imageUrl = storeData.config.promotionImage || storeData.config.menuImage;
-        
-        // Enviar mensagem de aguardando pedido após a imagem
-        setTimeout(() => {
-          const waitingMessage = {
-            id: (Date.now() + 2).toString(),
-            type: 'bot',
-            content: 'Aguardando pedido... 😊\n\nDigite o nome do produto desejado.',
-            timestamp: new Date()
-          };
-          session.messages.push(waitingMessage);
-          customerSessions.set(phone, session);
-        }, 1000);
-        
-        session.step = 'ordering';
+        response = 'Promoções em breve! Digite 1 para ver o cardápio.';
       } else {
         response = storeData.config.greeting;
       }
@@ -528,13 +579,10 @@ async function processCustomerMessage(message, contactName) {
           response = 'Seu carrinho está vazio. Adicione produtos antes de finalizar.';
           session.step = 'ordering';
         } else {
-          response = 'Ótimo! Vamos finalizar seu pedido.\n\n';
-          response += 'Por favor, me informe:\n';
-          response += '1. Seu nome completo\n';
-          response += '2. Endereço completo para entrega\n';
-          response += '3. Forma de pagamento (PIX ou Dinheiro)\n\n';
-          response += 'Digite as informações separadas por vírgula.';
-          session.step = 'customer_info';
+          response = '📋 *FINALIZAR PEDIDO*\n\n';
+          response += 'Seu pedido é para entrega ou retirada?\n';
+          response += 'Digite "entrega" ou "retirada":';
+          session.step = 'delivery_type';
         }
       } else {
         // Gerar resposta inteligente com sugestões
@@ -548,58 +596,153 @@ async function processCustomerMessage(message, contactName) {
       }
       break;
 
-    case 'customer_info':
-      const info = text.split(',').map(item => item.trim());
-      if (info.length >= 3) {
-        session.customerData = {
-          name: info[0],
-          address: info[1],
-          paymentMethod: info[2].toLowerCase()
-        };
+    case 'delivery_type':
+      if (text === 'entrega' || text === 'delivery') {
+        session.customerData.deliveryType = 'delivery';
+        response = '📍 *ENDEREÇO DE ENTREGA*\n\n';
+        response += 'Por favor, me informe sua rua:';
+        session.step = 'address_street';
+      } else if (text === 'retirada' || text === 'pickup') {
+        session.customerData.deliveryType = 'pickup';
+        response = '✅ Pedido para retirada!\n\n';
+        response += 'Por favor, me informe seu nome:';
+        session.step = 'customer_name';
+      } else {
+        response = 'Por favor, digite "entrega" ou "retirada":';
+      }
+      break;
+
+    case 'address_street':
+      session.customerData.street = message.body.trim();
+      response = 'Agora me informe o número:';
+      session.step = 'address_number';
+      break;
+
+    case 'address_number':
+      session.customerData.number = message.body.trim();
+      response = 'Agora me informe o bairro:';
+      session.step = 'address_district';
+      break;
+
+    case 'address_district':
+      session.customerData.district = message.body.trim();
+      response = 'Agora me informe a cidade:';
+      session.step = 'address_city';
+      break;
+
+    case 'address_city':
+      session.customerData.city = message.body.trim();
+      response = 'Por último, me informe um ponto de referência (opcional):';
+      session.step = 'address_reference';
+      break;
+
+    case 'address_reference':
+      session.customerData.reference = message.body.trim();
+      
+      // Montar endereço completo
+      const address = `${session.customerData.street}, ${session.customerData.number} - ${session.customerData.district}, ${session.customerData.city}`;
+      if (session.customerData.reference) {
+        address += ` (Ref: ${session.customerData.reference})`;
+      }
+      session.customerData.address = address;
+      
+      response = '✅ Endereço completo registrado!\n\n';
+      response += 'Por favor, me informe seu nome:';
+      session.step = 'customer_name';
+      break;
+
+    case 'customer_name':
+      session.customerData.name = message.body.trim();
         
         const cartTotal = calculateCartTotal(session.cart);
-        response = `Pedido confirmado!\n\n`;
-        response += `Cliente: ${session.customerData.name}\n`;
-        response += `Endereço: ${session.customerData.address}\n`;
-        response += `Pagamento: ${session.customerData.paymentMethod}\n\n`;
-        response += `Itens:\n`;
-        response += session.cart.map(item => 
-          `${item.product.name} x${item.quantity} - R$ ${(item.product.price * item.quantity).toFixed(2)}`
-        ).join('\n');
-        response += `\nSubtotal: R$ ${cartTotal.subtotal.toFixed(2)}`;
-        response += `\nTaxa de entrega: R$ ${cartTotal.deliveryFee.toFixed(2)}`;
-        response += `\nTotal: R$ ${cartTotal.total.toFixed(2)}`;
+      const isDelivery = session.customerData.deliveryType === 'delivery';
+      
+      response = `💰 *VALOR TOTAL*\n\n`;
+      response += `Subtotal: R$ ${cartTotal.subtotal.toFixed(2)}\n`;
+      if (isDelivery) {
+        response += `Taxa de entrega: R$ ${cartTotal.deliveryFee.toFixed(2)}\n`;
+      }
+      response += `*Total: R$ ${cartTotal.total.toFixed(2)}*\n\n`;
+      response += `💳 *FORMA DE PAGAMENTO*\n\n`;
+      response += `Escolha a forma de pagamento:\n`;
+      response += `1. PIX\n`;
+      response += `2. Dinheiro\n`;
+      response += `3. Cartão\n\n`;
+      response += `Digite o número da opção:`;
+      session.step = 'payment_method';
+      break;
+
+    case 'payment_method':
+      if (text === '1' || text === 'pix') {
+        session.customerData.paymentMethod = 'PIX';
+        const cartTotal = calculateCartTotal(session.cart);
         
-        if (session.customerData.paymentMethod === 'pix') {
-          response += `\n\nChave PIX: ${storeData.config.pixKey}`;
-        }
+        response = '💳 *PAGAMENTO VIA PIX*\n\n';
+        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += `*Chave PIX:* ${storeData.config.pixKey}\n\n`;
+        response += 'Após o pagamento, envie o comprovante para finalizar o pedido!';
         
-        response += `\n\nPedido enviado para a cozinha! 🍕`;
+        session.step = 'waiting_pix_proof';
         
-        // Criar pedido
-        const order = {
-          id: Date.now().toString(),
-          customerName: session.customerData.name,
-          customerPhone: phone,
-          items: [...session.cart],
-          subtotal: cartTotal.subtotal,
-          deliveryFee: storeData.config.deliveryFee,
-          total: cartTotal.total,
-          address: session.customerData.address,
-          paymentMethod: session.customerData.paymentMethod.toUpperCase(),
-          status: 'NEW',
-          createdAt: new Date()
-        };
+      } else if (text === '2' || text === 'dinheiro') {
+        session.customerData.paymentMethod = 'CASH';
+        const cartTotal = calculateCartTotal(session.cart);
         
-        orders.push(order);
+        response = '💵 *PAGAMENTO EM DINHEIRO*\n\n';
+        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += 'Informe o valor que você vai pagar:';
+        session.step = 'cash_amount';
         
-        // Emitir evento para o frontend
-        io.emit('new-order', order);
+      } else if (text === '3' || text === 'cartão' || text === 'cartao') {
+        session.customerData.paymentMethod = 'CARD';
+        const cartTotal = calculateCartTotal(session.cart);
         
-        // Limpar sessão
-        customerSessions.delete(phone);
+        response = '💳 *PAGAMENTO COM CARTÃO*\n\n';
+        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += 'Pedido confirmado! O pagamento será realizado na entrega/retirada.';
+        
+        // Finalizar pedido com cartão
+        finalizeOrder(session, phone);
+        
       } else {
-        response = 'Por favor, forneça todas as informações necessárias: nome, endereço e forma de pagamento, separadas por vírgula.';
+        response = 'Opção inválida. Digite "1" para PIX, "2" para dinheiro ou "3" para cartão.';
+      }
+      break;
+
+    case 'waiting_pix_proof':
+      // Verificar se é uma imagem (comprovante PIX)
+      if (message.hasMedia) {
+        response = '✅ Comprovante PIX recebido!\n\n';
+        response += 'Pedido confirmado e enviado para a cozinha! 🍕\n';
+        response += 'Obrigado pela preferência!';
+        
+        // Finalizar pedido com PIX
+        finalizeOrder(session, phone);
+      } else {
+        response = 'Por favor, envie o comprovante PIX (imagem) para finalizar o pedido.';
+      }
+      break;
+
+    case 'cash_amount':
+      const cashAmount = parseFloat(text.replace(',', '.'));
+      const cartTotal = calculateCartTotal(session.cart);
+      
+      if (isNaN(cashAmount) || cashAmount < cartTotal.total) {
+        response = `O valor deve ser maior ou igual ao total de R$ ${cartTotal.total.toFixed(2)}. Informe novamente:`;
+      } else {
+        const change = cashAmount - cartTotal.total;
+        session.customerData.cashAmount = cashAmount;
+        session.customerData.change = change;
+        
+        response = '💵 *PAGAMENTO EM DINHEIRO*\n\n';
+        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += `*Valor pago:* R$ ${cashAmount.toFixed(2)}\n`;
+        response += `*Troco:* R$ ${change.toFixed(2)}\n\n`;
+        response += 'Pedido confirmado e enviado para a cozinha! 🍕\n';
+        response += 'Obrigado pela preferência!';
+        
+        // Finalizar pedido com dinheiro
+        finalizeOrder(session, phone);
       }
       break;
   }
@@ -620,6 +763,38 @@ async function processCustomerMessage(message, contactName) {
   return { response, shouldSendImage, imageUrl };
 }
 
+// Função para finalizar pedido
+function finalizeOrder(session, phone) {
+  const cartTotal = calculateCartTotal(session.cart);
+  const isDelivery = session.customerData.deliveryType === 'delivery';
+  
+  // Criar pedido
+  const order = {
+    id: Date.now().toString(),
+    customerName: session.customerData.name,
+    customerPhone: phone,
+    items: [...session.cart],
+    subtotal: cartTotal.subtotal,
+    deliveryFee: isDelivery ? storeData.config.deliveryFee : 0,
+    total: cartTotal.total,
+    address: session.customerData.address,
+    deliveryType: session.customerData.deliveryType,
+    paymentMethod: session.customerData.paymentMethod,
+    cashAmount: session.customerData.cashAmount,
+    change: session.customerData.change,
+    status: 'NEW',
+    createdAt: new Date()
+  };
+  
+  orders.push(order);
+  
+  // Emitir evento para o frontend
+  io.emit('new-order', order);
+  
+  // Limpar sessão
+  customerSessions.delete(phone);
+}
+
 // Rota de health check
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -638,20 +813,20 @@ app.get('/api/health', (req, res) => {
 // Rota de login
 app.post('/api/auth/login', (req, res) => {
   console.log('Tentativa de login:', req.body);
-  const { username, password } = req.body;
+  const { email, password } = req.body;
   
-  if (!username || !password) {
-    return res.status(400).json({ message: 'Username e password são obrigatórios' });
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email e password são obrigatórios' });
   }
   
-  const user = users.find(u => u.username === username && u.password === password);
+  const user = users.find(u => u.email === email && u.password === password);
   
   if (user) {
     const { password: _, ...userWithoutPassword } = user;
-    console.log('Login bem-sucedido para:', username);
+    console.log('Login bem-sucedido para:', email);
     res.json(userWithoutPassword);
   } else {
-    console.log('Login falhou para:', username);
+    console.log('Login falhou para:', email);
     res.status(401).json({ message: 'Usuário ou senha inválidos' });
   }
 });

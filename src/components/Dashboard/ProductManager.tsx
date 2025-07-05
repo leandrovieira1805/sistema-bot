@@ -22,7 +22,12 @@ export function ProductManager({
   const [formData, setFormData] = useState({
     name: '',
     price: 0,
-    image: ''
+    image: '',
+    unit: 'unit' as 'unit' | 'pack' | 'box',
+    unitLabel: 'unidade',
+    packSize: 1,
+    packPrice: 0,
+    unitPrice: 0
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -38,7 +43,7 @@ export function ProductManager({
           categoryId: category.id
         });
       }
-      setFormData({ name: '', price: 0, image: '' });
+      setFormData({ name: '', price: 0, image: '', unit: 'unit', unitLabel: 'unidade', packSize: 1, packPrice: 0, unitPrice: 0 });
       setImagePreview(null);
       setShowAddForm(false);
     }
@@ -49,7 +54,12 @@ export function ProductManager({
     setFormData({
       name: product.name,
       price: product.price,
-      image: product.image
+      image: product.image,
+      unit: product.unit,
+      unitLabel: product.unitLabel,
+      packSize: product.packSize,
+      packPrice: product.packPrice,
+      unitPrice: product.unitPrice
     });
     setImagePreview(product.image || null);
     setShowAddForm(true);
@@ -57,7 +67,7 @@ export function ProductManager({
 
   const handleCancel = () => {
     setEditingId(null);
-    setFormData({ name: '', price: 0, image: '' });
+    setFormData({ name: '', price: 0, image: '', unit: 'unit', unitLabel: 'unidade', packSize: 1, packPrice: 0, unitPrice: 0 });
     setImagePreview(null);
     setShowAddForm(false);
   };
@@ -118,14 +128,72 @@ export function ProductManager({
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preço (R$)
+                    Tipo de Unidade
+                  </label>
+                  <select
+                    value={formData.unit}
+                    onChange={(e) => {
+                      const unit = e.target.value as 'unit' | 'pack' | 'box';
+                      const unitLabels = {
+                        unit: 'unidade',
+                        pack: 'fardo',
+                        box: 'caixa'
+                      };
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        unit,
+                        unitLabel: unitLabels[unit]
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                  >
+                    <option value="unit">Unidade</option>
+                    <option value="pack">Fardo</option>
+                    <option value="box">Caixa</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Quantidade por {formData.unitLabel}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.packSize}
+                    onChange={(e) => setFormData(prev => ({ ...prev, packSize: parseInt(e.target.value) || 1 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="1"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preço por {formData.unitLabel} (R$)
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                    value={formData.packPrice}
+                    onChange={(e) => setFormData(prev => ({ ...prev, packPrice: parseFloat(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="0.00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preço por unidade (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.unitPrice}
+                    onChange={(e) => setFormData(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="0.00"
                     required
@@ -224,11 +292,50 @@ export function ProductManager({
               
               <div className="p-4">
                 <h5 className="font-semibold text-gray-800 mb-2">{product.name}</h5>
-                <div className="flex items-center gap-2 mb-3">
-                  <DollarSign size={16} className="text-green-600" />
-                  <span className="text-lg font-bold text-green-600">
-                    R$ {product.price.toFixed(2)}
-                  </span>
+                
+                {/* Informações de Unidade */}
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Package size={14} className="text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      {product.unitLabel || 'unidade'}
+                    </span>
+                  </div>
+                  
+                  {/* Preços */}
+                  <div className="space-y-1">
+                    {product.packPrice && product.packPrice > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">
+                          {product.packSize || 1}x {product.unitLabel || 'unidade'}:
+                        </span>
+                        <span className="text-sm font-semibold text-green-600">
+                          R$ {product.packPrice.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {product.unitPrice && product.unitPrice > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">
+                          1 {product.unitLabel || 'unidade'}:
+                        </span>
+                        <span className="text-sm font-semibold text-green-600">
+                          R$ {product.unitPrice.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* Preço padrão (fallback) */}
+                    {(!product.packPrice || product.packPrice === 0) && (!product.unitPrice || product.unitPrice === 0) && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Preço:</span>
+                        <span className="text-lg font-bold text-green-600">
+                          R$ {product.price.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex gap-2">

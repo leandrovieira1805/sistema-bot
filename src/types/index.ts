@@ -13,6 +13,11 @@ export interface Product {
   price: number;
   image: string;
   categoryId: string;
+  unit?: 'unit' | 'pack' | 'box'; // unidade, fardo, caixa
+  unitLabel?: string; // "unidade", "fardo", "caixa"
+  packSize?: number; // quantidade no fardo/caixa
+  packPrice?: number; // preço do fardo/caixa
+  unitPrice?: number; // preço da unidade
 }
 
 export interface Category {
@@ -44,7 +49,8 @@ export interface Order {
   deliveryFee: number;
   total: number;
   address?: string;
-  paymentMethod: 'PIX' | 'CASH';
+  deliveryType?: 'delivery' | 'pickup';
+  paymentMethod: 'PIX' | 'CASH' | 'CARD';
   cashAmount?: number;
   change?: number;
   status: 'NEW' | 'PREPARING' | 'COMPLETED';
@@ -62,28 +68,35 @@ export interface ChatMessage {
 export interface CustomerSession {
   phone: string;
   cart: OrderItem[];
-  step: 'greeting' | 'menu' | 'ordering' | 'address' | 'payment' | 'completed';
-  customerData?: {
+  step: 'greeting' | 'menu' | 'ordering' | 'delivery_type' | 'address_street' | 'address_number' | 'address_district' | 'address_city' | 'address_reference' | 'customer_name' | 'payment_method' | 'cash_amount' | 'waiting_pix_proof' | 'completed';
+  messages: ChatMessage[];
+  customerData: {
     name?: string;
     address?: string;
-    paymentMethod?: 'PIX' | 'CASH';
+    street?: string;
+    number?: string;
+    district?: string;
+    city?: string;
+    reference?: string;
+    deliveryType?: 'delivery' | 'pickup';
+    paymentMethod?: 'PIX' | 'CASH' | 'CARD';
     cashAmount?: number;
+    change?: number;
   };
-  messages: ChatMessage[];
+  suggestions?: string[];
 }
 
 export interface User {
   id: string;
-  username: string;
   email: string;
-  password: string; // Será hasheada
+  password?: string; // Não expor senha no frontend
   storeConfig: StoreConfig;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface LoginCredentials {
-  username: string;
+  email: string;
   password: string;
 }
 

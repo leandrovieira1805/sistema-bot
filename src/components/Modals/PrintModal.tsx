@@ -15,9 +15,9 @@ export function PrintModal({ order, onClose, storeName, storeAddress }: PrintMod
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Comanda do Pedido</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Cupom Fiscal</h3>
           <div className="flex gap-2">
             <button
               onClick={handlePrint}
@@ -35,120 +35,121 @@ export function PrintModal({ order, onClose, storeName, storeAddress }: PrintMod
           </div>
         </div>
 
-        <div className="p-6 print:p-4" id="print-content">
-          <div className="text-center mb-6 print:mb-4">
-            <h1 className="text-2xl font-bold text-gray-800 print:text-xl">{storeName}</h1>
-            <p className="text-gray-600 print:text-sm">{storeAddress}</p>
-            <div className="mt-4 print:mt-2">
-              <h2 className="text-xl font-semibold text-gray-800 print:text-lg">COMANDA DE PEDIDO</h2>
-              <p className="text-gray-600 print:text-sm">#{order.id}</p>
-            </div>
+        <div className="p-4 print:p-2" id="print-content">
+          {/* Cabeçalho do Cupom */}
+          <div className="text-center mb-4 print:mb-2 border-b border-gray-300 pb-2">
+            <h1 className="text-lg font-bold text-gray-800 print:text-base">{storeName}</h1>
+            <p className="text-xs text-gray-600 print:text-xs">{storeAddress}</p>
+            <p className="text-xs text-gray-600 print:text-xs mt-1">
+              CNPJ: 00.000.000/0001-00
+            </p>
+            <p className="text-xs text-gray-600 print:text-xs">
+              IE: 000.000.000.000
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 print:gap-4 mb-6 print:mb-4">
-            <div>
-              <h3 className="font-semibold text-gray-800 mb-2 print:text-sm">Dados do Cliente</h3>
-              <p className="text-gray-600 print:text-xs">
-                <strong>Nome:</strong> {order.customerName || 'Não informado'}
-              </p>
-              <p className="text-gray-600 print:text-xs">
-                <strong>Telefone:</strong> {order.customerPhone}
-              </p>
-              <p className="text-gray-600 print:text-xs">
-                <strong>Data/Hora:</strong> {order.createdAt.toLocaleString()}
-              </p>
+          {/* Informações do Pedido */}
+          <div className="mb-4 print:mb-2">
+            <div className="text-center mb-2">
+              <h2 className="text-sm font-bold text-gray-800 print:text-xs">CUPOM NÃO FISCAL</h2>
+              <p className="text-xs text-gray-600 print:text-xs">#{order.id}</p>
             </div>
 
-            {order.address && (
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2 print:text-sm">Endereço de Entrega</h3>
-                <p className="text-gray-600 text-sm print:text-xs">{order.address}</p>
+            <div className="text-xs text-gray-600 print:text-xs space-y-1">
+              <p><strong>Data:</strong> {order.createdAt.toLocaleDateString()}</p>
+              <p><strong>Hora:</strong> {order.createdAt.toLocaleTimeString()}</p>
+              <p><strong>Cliente:</strong> {order.customerName || 'Não informado'}</p>
+              <p><strong>Telefone:</strong> {order.customerPhone}</p>
+              <p><strong>Tipo:</strong> {order.deliveryType === 'delivery' ? 'ENTREGA' : 'RETIRADA'}</p>
               </div>
-            )}
           </div>
 
-          <div className="mb-6 print:mb-4">
-            <h3 className="font-semibold text-gray-800 mb-3 print:text-sm print:mb-2">Itens do Pedido</h3>
-            <div className="border border-gray-200 rounded-lg overflow-hidden print:border-gray-400">
-              <table className="w-full">
-                <thead className="bg-gray-50 print:bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm font-medium text-gray-600 print:text-xs print:px-2 print:py-1">Item</th>
-                    <th className="px-4 py-2 text-center text-sm font-medium text-gray-600 print:text-xs print:px-2 print:py-1">Qtd</th>
-                    <th className="px-4 py-2 text-right text-sm font-medium text-gray-600 print:text-xs print:px-2 print:py-1">Preço Unit.</th>
-                    <th className="px-4 py-2 text-right text-sm font-medium text-gray-600 print:text-xs print:px-2 print:py-1">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
+          {/* Endereço (se for entrega) */}
+          {order.deliveryType === 'delivery' && order.address && (
+            <div className="mb-4 print:mb-2 border-t border-gray-300 pt-2">
+              <h3 className="text-xs font-bold text-gray-800 print:text-xs mb-1">ENDEREÇO DE ENTREGA</h3>
+              <p className="text-xs text-gray-600 print:text-xs">{order.address}</p>
+            </div>
+          )}
+
+          {/* Itens do Pedido */}
+          <div className="mb-4 print:mb-2 border-t border-gray-300 pt-2">
+            <h3 className="text-xs font-bold text-gray-800 print:text-xs mb-2">ITENS DO PEDIDO</h3>
+            <div className="space-y-1">
                   {order.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-2 text-sm text-gray-800 print:text-xs print:px-2 print:py-1">
-                        {item.product.name}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-800 text-center print:text-xs print:px-2 print:py-1">
-                        {item.quantity}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-800 text-right print:text-xs print:px-2 print:py-1">
-                        R$ {item.product.price.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-gray-800 text-right font-medium print:text-xs print:px-2 print:py-1">
+                <div key={index} className="flex justify-between text-xs print:text-xs">
+                  <span className="flex-1">
+                    {item.quantity}x {item.product.name}
+                  </span>
+                  <span className="font-medium">
                         R$ {(item.product.price * item.quantity).toFixed(2)}
-                      </td>
-                    </tr>
+                  </span>
+                </div>
                   ))}
-                </tbody>
-              </table>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4 print:pt-2">
-            <div className="space-y-2 print:space-y-1">
-              <div className="flex justify-between text-sm text-gray-600 print:text-xs">
-                <span>Subtotal dos Produtos:</span>
+          {/* Totais */}
+          <div className="mb-4 print:mb-2 border-t border-gray-300 pt-2">
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs print:text-xs">
+                <span>Subtotal:</span>
                 <span>R$ {order.subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm text-gray-600 print:text-xs">
+              {order.deliveryType === 'delivery' && (
+                <div className="flex justify-between text-xs print:text-xs">
                 <span>Taxa de Entrega:</span>
                 <span>R$ {order.deliveryFee.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-lg font-bold text-gray-800 border-t border-gray-200 pt-2 print:text-sm print:pt-1">
-                <span>Total do Pedido:</span>
+              )}
+              <div className="flex justify-between text-sm font-bold text-gray-800 print:text-xs border-t border-gray-300 pt-1">
+                <span>TOTAL:</span>
                 <span>R$ {order.total.toFixed(2)}</span>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 print:mt-4 pt-4 print:pt-2 border-t border-gray-200">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 print:gap-2">
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2 print:text-sm print:mb-1">Forma de Pagamento</h3>
-                <p className="text-gray-600 print:text-xs">
-                  {order.paymentMethod === 'PIX' ? 'PIX' : 'Dinheiro'}
+          {/* Forma de Pagamento */}
+          <div className="mb-4 print:mb-2 border-t border-gray-300 pt-2">
+            <h3 className="text-xs font-bold text-gray-800 print:text-xs mb-1">FORMA DE PAGAMENTO</h3>
+            <div className="text-xs text-gray-600 print:text-xs space-y-1">
+              <p>
+                {order.paymentMethod === 'PIX' ? 'PIX' : 
+                 order.paymentMethod === 'CASH' ? 'DINHEIRO' : 'CARTÃO'}
                 </p>
                 {order.paymentMethod === 'CASH' && order.cashAmount && (
                   <>
-                    <p className="text-gray-600 text-sm print:text-xs">
-                      Valor Pago: R$ {order.cashAmount.toFixed(2)}
-                    </p>
-                    <p className="text-gray-600 text-sm print:text-xs">
-                      Troco: R$ {order.change?.toFixed(2)}
-                    </p>
+                  <p>Valor Pago: R$ {order.cashAmount.toFixed(2)}</p>
+                  <p>Troco: R$ {order.change?.toFixed(2)}</p>
                   </>
                 )}
+            </div>
               </div>
 
-              <div>
-                <h3 className="font-semibold text-gray-800 mb-2 print:text-sm print:mb-1">Status</h3>
-                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium print:text-xs ${
+          {/* Status */}
+          <div className="mb-4 print:mb-2 border-t border-gray-300 pt-2">
+            <h3 className="text-xs font-bold text-gray-800 print:text-xs mb-1">STATUS</h3>
+            <span className={`inline-block px-2 py-1 rounded text-xs font-medium print:text-xs ${
                   order.status === 'NEW' ? 'bg-yellow-100 text-yellow-800' :
                   order.status === 'PREPARING' ? 'bg-blue-100 text-blue-800' :
                   'bg-green-100 text-green-800'
                 }`}>
-                  {order.status === 'NEW' ? 'Novo' :
-                   order.status === 'PREPARING' ? 'Em Preparo' : 'Finalizado'}
+              {order.status === 'NEW' ? 'NOVO' :
+               order.status === 'PREPARING' ? 'EM PREPARO' : 'FINALIZADO'}
                 </span>
               </div>
-            </div>
+
+          {/* Rodapé */}
+          <div className="text-center border-t border-gray-300 pt-2">
+            <p className="text-xs text-gray-600 print:text-xs">
+              Obrigado pela preferência!
+            </p>
+            <p className="text-xs text-gray-600 print:text-xs">
+              {storeName}
+            </p>
+            <p className="text-xs text-gray-600 print:text-xs">
+              {storeAddress}
+            </p>
           </div>
         </div>
       </div>

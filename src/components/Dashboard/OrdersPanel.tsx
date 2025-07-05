@@ -106,12 +106,20 @@ export function OrdersPanel({ orders, onUpdateStatus, onPrint }: OrdersPanelProp
                     <DollarSign size={16} />
                     Pagamento
                   </h5>
-                  <p className="text-gray-600">{order.paymentMethod === 'PIX' ? 'PIX' : 'Dinheiro'}</p>
+                  <p className="text-gray-600">
+                    {order.paymentMethod === 'PIX' ? 'PIX' : 
+                     order.paymentMethod === 'CASH' ? 'Dinheiro' : 'Cartão'}
+                  </p>
                   {order.paymentMethod === 'CASH' && order.cashAmount && (
                     <>
                       <p className="text-sm text-gray-500">Valor pago: R$ {order.cashAmount.toFixed(2)}</p>
                       <p className="text-sm text-gray-500">Troco: R$ {order.change?.toFixed(2)}</p>
                     </>
+                  )}
+                  {order.deliveryType && (
+                    <p className="text-sm text-gray-500">
+                      Tipo: {order.deliveryType === 'delivery' ? 'Entrega' : 'Retirada'}
+                    </p>
                   )}
                 </div>
               </div>

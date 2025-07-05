@@ -112,28 +112,42 @@ export function WhatsAppBot({
 
       case 'menu':
       case 'ordering':
-        if (lowerMessage === 'não' || lowerMessage === 'nao') {
+        if (lowerMessage === 'finalizar' || lowerMessage === 'finalizar pedido') {
           finalizeOrder(session);
         } else {
           addProductToCart(session, message);
         }
         break;
 
-      case 'address':
-        onUpdateSession(session.phone, {
-          customerData: { ...session.customerData, address: message },
-          step: 'payment'
-        });
-        
-        const deliveryTotal = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) + storeConfig.deliveryFee;
-        
-        sendBotMessage(
-          `Endereço recebido! O valor do seu pedido é R$ ${session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0).toFixed(2)} + R$ ${storeConfig.deliveryFee.toFixed(2)} (taxa de entrega), totalizando R$ ${deliveryTotal.toFixed(2)}. Qual será a forma de pagamento? (Digite 'PIX' ou 'Dinheiro')`
-        );
+      case 'delivery_type':
+        handleDeliveryType(session, lowerMessage);
         break;
 
-      case 'payment':
+      case 'address_street':
+      case 'address_number':
+      case 'address_district':
+      case 'address_city':
+      case 'address_reference':
+        handleAddressStep(session, message, session.step);
+        break;
+
+      case 'customer_name':
+        handleCustomerName(session, message);
+        break;
+
+      case 'payment_method':
         handlePayment(session, lowerMessage);
+        break;
+
+      case 'cash_amount':
+        handleCashAmount(session, message);
+        break;
+
+      case 'waiting_pix_proof':
+        sendBotMessage('✅ Comprovante PIX recebido!\n\nPedido confirmado e enviado para a cozinha! 🍕\nObrigado pela preferência!');
+        setTimeout(() => {
+          onCreateOrder(session.phone);
+        }, 2000);
         break;
 
       default:
@@ -209,15 +223,39 @@ export function WhatsAppBot({
         updatedCart = [...session.cart, { product, quantity: 1 }];
       }
 
-      const total = updatedCart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+      // Calcular preço baseado na unidade do produto
+      const getProductPrice = (product: Product) => {
+        if (product.packPrice && product.packPrice > 0) {
+          return product.packPrice;
+        } else if (product.unitPrice && product.unitPrice > 0) {
+          return product.unitPrice;
+        } else {
+          return product.price;
+        }
+      };
+
+      const productPrice = getProductPrice(product);
+      const total = updatedCart.reduce((sum, item) => sum + (getProductPrice(item.product) * item.quantity), 0);
 
       onUpdateSession(session.phone, {
         cart: updatedCart,
         step: 'ordering'
       });
 
+      // Mensagem com informações de unidade
+      let priceMessage = '';
+      if (product.packPrice && product.packPrice > 0 && product.unitPrice && product.unitPrice > 0) {
+        priceMessage = `\n💰 Preços:\n• ${product.packSize || 1}x ${product.unitLabel || 'unidade'}: R$ ${product.packPrice.toFixed(2)}\n• 1 ${product.unitLabel || 'unidade'}: R$ ${product.unitPrice.toFixed(2)}`;
+      } else if (product.packPrice && product.packPrice > 0) {
+        priceMessage = `\n💰 Preço: R$ ${product.packPrice.toFixed(2)} por ${product.packSize || 1}x ${product.unitLabel || 'unidade'}`;
+      } else if (product.unitPrice && product.unitPrice > 0) {
+        priceMessage = `\n💰 Preço: R$ ${product.unitPrice.toFixed(2)} por ${product.unitLabel || 'unidade'}`;
+      } else {
+        priceMessage = `\n💰 Preço: R$ ${product.price.toFixed(2)}`;
+      }
+
       sendBotMessage(
-        `✅ ${product.name} adicionado! O total do seu pedido está em R$ ${total.toFixed(2)}. Deseja mais alguma coisa? (Digite o nome de outro item ou 'não' para finalizar).`
+        `✅ ${product.name} adicionado!${priceMessage}\n\nO total do seu pedido está em R$ ${total.toFixed(2)}. Deseja mais alguma coisa? (Digite o nome de outro item ou 'finalizar' para concluir).`
       );
     } else {
       sendBotMessage(
@@ -232,23 +270,133 @@ export function WhatsAppBot({
       return;
     }
 
-    onUpdateSession(session.phone, { step: 'address' });
-    sendBotMessage('Entendido! Seu pedido é para entrega? (Responda "sim" ou "não")');
+    onUpdateSession(session.phone, { step: 'delivery_type' });
+    sendBotMessage('📋 *FINALIZAR PEDIDO*\n\nSeu pedido é para entrega ou retirada?\nDigite "entrega" ou "retirada":');
+  };
+
+  const handleDeliveryType = (session: CustomerSession, deliveryType: string) => {
+    if (deliveryType === 'entrega') {
+      onUpdateSession(session.phone, { 
+        customerData: { ...session.customerData, deliveryType: 'delivery' },
+        step: 'address_street'
+      });
+      sendBotMessage('📍 *ENDEREÇO DE ENTREGA*\n\nPor favor, me informe sua rua:');
+    } else if (deliveryType === 'retirada') {
+      onUpdateSession(session.phone, { 
+        customerData: { ...session.customerData, deliveryType: 'pickup' },
+        step: 'customer_name'
+      });
+      sendBotMessage('✅ Pedido para retirada!\n\nPor favor, me informe seu nome:');
+    } else {
+      sendBotMessage('Por favor, digite "entrega" ou "retirada":');
+    }
+  };
+
+  const handleAddressStep = (session: CustomerSession, message: string, step: string) => {
+    const updates: Partial<CustomerSession> = { customerData: { ...session.customerData } };
     
-    setTimeout(() => {
-      sendBotMessage('Ótimo! Por favor, me informe seu endereço completo para a entrega (Rua, Número, Bairro, Cidade e Ponto de Referência).');
-    }, 1000);
+    switch (step) {
+      case 'address_street':
+        updates.customerData!.street = message;
+        updates.step = 'address_number';
+        sendBotMessage('Agora me informe o número:');
+        break;
+      case 'address_number':
+        updates.customerData!.number = message;
+        updates.step = 'address_district';
+        sendBotMessage('Agora me informe o bairro:');
+        break;
+      case 'address_district':
+        updates.customerData!.district = message;
+        updates.step = 'address_city';
+        sendBotMessage('Agora me informe a cidade:');
+        break;
+      case 'address_city':
+        updates.customerData!.city = message;
+        updates.step = 'address_reference';
+        sendBotMessage('Por último, me informe um ponto de referência (opcional):');
+        break;
+      case 'address_reference':
+        updates.customerData!.reference = message;
+        
+        // Montar endereço completo
+        const address = `${session.customerData.street}, ${session.customerData.number} - ${session.customerData.district}, ${session.customerData.city}`;
+        if (message) {
+          address += ` (Ref: ${message})`;
+        }
+        updates.customerData!.address = address;
+        updates.step = 'customer_name';
+        sendBotMessage('✅ Endereço completo registrado!\n\nPor favor, me informe seu nome:');
+        break;
+    }
+    
+    onUpdateSession(session.phone, updates);
+  };
+
+  const handleCustomerName = (session: CustomerSession, name: string) => {
+    const cartTotal = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const isDelivery = session.customerData.deliveryType === 'delivery';
+    const total = isDelivery ? cartTotal + storeConfig.deliveryFee : cartTotal;
+    
+    onUpdateSession(session.phone, {
+      customerData: { ...session.customerData, name },
+      step: 'payment_method'
+    });
+    
+    sendBotMessage(
+      `💰 *VALOR TOTAL*\n\n` +
+      `Subtotal: R$ ${cartTotal.toFixed(2)}\n` +
+      (isDelivery ? `Taxa de entrega: R$ ${storeConfig.deliveryFee.toFixed(2)}\n` : '') +
+      `*Total: R$ ${total.toFixed(2)}*\n\n` +
+      `💳 *FORMA DE PAGAMENTO*\n\n` +
+      `Escolha a forma de pagamento:\n` +
+      `1. PIX\n` +
+      `2. Dinheiro\n` +
+      `3. Cartão\n\n` +
+      `Digite o número da opção:`
+    );
   };
 
   const handlePayment = (session: CustomerSession, method: string) => {
-    if (method === 'pix') {
+    const cartTotal = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const isDelivery = session.customerData.deliveryType === 'delivery';
+    const total = isDelivery ? cartTotal + storeConfig.deliveryFee : cartTotal;
+
+    if (method === '1' || method === 'pix') {
       onUpdateSession(session.phone, {
         customerData: { ...session.customerData, paymentMethod: 'PIX' },
+        step: 'waiting_pix_proof'
+      });
+      
+      sendBotMessage(
+        `💳 *PAGAMENTO VIA PIX*\n\n` +
+        `*Valor total:* R$ ${total.toFixed(2)}\n` +
+        `*Chave PIX:* ${storeConfig.pixKey}\n\n` +
+        `Após o pagamento, envie o comprovante para finalizar o pedido!`
+      );
+
+    } else if (method === '2' || method === 'dinheiro') {
+      onUpdateSession(session.phone, {
+        customerData: { ...session.customerData, paymentMethod: 'CASH' },
+        step: 'cash_amount'
+      });
+      
+      sendBotMessage(
+        `💵 *PAGAMENTO EM DINHEIRO*\n\n` +
+        `*Valor total:* R$ ${total.toFixed(2)}\n` +
+        `Informe o valor que você vai pagar:`
+      );
+
+    } else if (method === '3' || method === 'cartão' || method === 'cartao') {
+      onUpdateSession(session.phone, {
+        customerData: { ...session.customerData, paymentMethod: 'CARD' },
         step: 'completed'
       });
       
       sendBotMessage(
-        `Certo! Nossa chave PIX é: ${storeConfig.pixKey}. Assim que fizer o pagamento, por favor, me envie o comprovante. Vou registrar seu pedido!`
+        `💳 *PAGAMENTO COM CARTÃO*\n\n` +
+        `*Valor total:* R$ ${total.toFixed(2)}\n` +
+        `Pedido confirmado! O pagamento será realizado na entrega/retirada.`
       );
       
       setTimeout(() => {
@@ -256,13 +404,23 @@ export function WhatsAppBot({
         sendBotMessage('Pedido registrado com sucesso! Obrigado pela preferência! 😊');
       }, 2000);
 
-    } else if (method === 'dinheiro') {
-      sendBotMessage('Pagamento em dinheiro. Você precisa de troco? Se sim, para qual valor? (Ex: "troco para 100")');
-      
-      // Handle cash payment logic here
-      setTimeout(() => {
-        const total = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0) + storeConfig.deliveryFee;
-        const cashAmount = 100; // This would come from user input
+    } else {
+      sendBotMessage('Opção inválida. Digite "1" para PIX, "2" para dinheiro ou "3" para cartão.');
+    }
+  };
+
+  const handleCashAmount = (session: CustomerSession, amount: string) => {
+    const cartTotal = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const isDelivery = session.customerData.deliveryType === 'delivery';
+    const total = isDelivery ? cartTotal + storeConfig.deliveryFee : cartTotal;
+    
+    const cashAmount = parseFloat(amount.replace(',', '.'));
+    
+    if (isNaN(cashAmount) || cashAmount < total) {
+      sendBotMessage(`O valor deve ser maior ou igual ao total de R$ ${total.toFixed(2)}. Informe novamente:`);
+      return;
+    }
+    
         const change = cashAmount - total;
         
         onUpdateSession(session.phone, {
@@ -270,22 +428,23 @@ export function WhatsAppBot({
             ...session.customerData, 
             paymentMethod: 'CASH',
             cashAmount,
+        change
           },
           step: 'completed'
         });
         
         sendBotMessage(
-          `Combinado! O entregador levará troco para R$ ${cashAmount.toFixed(2)} (seu troco será de R$ ${change.toFixed(2)}). Pedido confirmado! Agradecemos a preferência.`
+      `💵 *PAGAMENTO EM DINHEIRO*\n\n` +
+      `*Valor total:* R$ ${total.toFixed(2)}\n` +
+      `*Valor pago:* R$ ${cashAmount.toFixed(2)}\n` +
+      `*Troco:* R$ ${change.toFixed(2)}\n\n` +
+      `Pedido confirmado e enviado para a cozinha! 🍕\n` +
+      `Obrigado pela preferência!`
         );
         
         setTimeout(() => {
           onCreateOrder(session.phone);
-        }, 1000);
-      }, 3000);
-
-    } else {
-      sendBotMessage('Por favor, escolha entre "PIX" ou "Dinheiro" como forma de pagamento.');
-    }
+    }, 2000);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
