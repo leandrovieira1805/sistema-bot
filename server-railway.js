@@ -653,16 +653,16 @@ async function processCustomerMessage(message, contactName) {
 
     case 'customer_name':
       session.customerData.name = message.body.trim();
-        
-        const cartTotal = calculateCartTotal(session.cart);
+      
+      const cartTotalForCustomer = calculateCartTotal(session.cart);
       const isDelivery = session.customerData.deliveryType === 'delivery';
       
       response = `💰 *VALOR TOTAL*\n\n`;
-      response += `Subtotal: R$ ${cartTotal.subtotal.toFixed(2)}\n`;
+      response += `Subtotal: R$ ${cartTotalForCustomer.subtotal.toFixed(2)}\n`;
       if (isDelivery) {
-        response += `Taxa de entrega: R$ ${cartTotal.deliveryFee.toFixed(2)}\n`;
+        response += `Taxa de entrega: R$ ${cartTotalForCustomer.deliveryFee.toFixed(2)}\n`;
       }
-      response += `*Total: R$ ${cartTotal.total.toFixed(2)}*\n\n`;
+      response += `*Total: R$ ${cartTotalForCustomer.total.toFixed(2)}*\n\n`;
       response += `💳 *FORMA DE PAGAMENTO*\n\n`;
       response += `Escolha a forma de pagamento:\n`;
       response += `1. PIX\n`;
@@ -675,10 +675,10 @@ async function processCustomerMessage(message, contactName) {
     case 'payment_method':
       if (text === '1' || text === 'pix') {
         session.customerData.paymentMethod = 'PIX';
-        const cartTotal = calculateCartTotal(session.cart);
+        const cartTotalForPayment = calculateCartTotal(session.cart);
         
         response = '💳 *PAGAMENTO VIA PIX*\n\n';
-        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += `*Valor total:* R$ ${cartTotalForPayment.total.toFixed(2)}\n`;
         response += `*Chave PIX:* ${storeData.config.pixKey}\n\n`;
         response += 'Após o pagamento, envie o comprovante para finalizar o pedido!';
         
@@ -686,19 +686,19 @@ async function processCustomerMessage(message, contactName) {
         
       } else if (text === '2' || text === 'dinheiro') {
         session.customerData.paymentMethod = 'CASH';
-        const cartTotal = calculateCartTotal(session.cart);
+        const cartTotalForCash = calculateCartTotal(session.cart);
         
         response = '💵 *PAGAMENTO EM DINHEIRO*\n\n';
-        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += `*Valor total:* R$ ${cartTotalForCash.total.toFixed(2)}\n`;
         response += 'Informe o valor que você vai pagar:';
         session.step = 'cash_amount';
         
       } else if (text === '3' || text === 'cartão' || text === 'cartao') {
         session.customerData.paymentMethod = 'CARD';
-        const cartTotal = calculateCartTotal(session.cart);
+        const cartTotalForCard = calculateCartTotal(session.cart);
         
         response = '💳 *PAGAMENTO COM CARTÃO*\n\n';
-        response += `*Valor total:* R$ ${cartTotal.total.toFixed(2)}\n`;
+        response += `*Valor total:* R$ ${cartTotalForCard.total.toFixed(2)}\n`;
         response += 'Pedido confirmado! O pagamento será realizado na entrega/retirada.';
         
         // Finalizar pedido com cartão
@@ -892,9 +892,22 @@ app.put('/api/user/:userId/config', (req, res) => {
   }
 });
 
-// Rota raiz (healthcheck para Railway)
+// Endpoint de healthcheck para o Railway
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'WhatsApp Bot API'
+  });
+});
+
+// Endpoint raiz também para healthcheck
 app.get('/', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Healthcheck by Railway', time: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    message: 'WhatsApp Bot API está funcionando!',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Socket.IO connection handling
