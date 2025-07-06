@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { QrCode, Smartphone, X, CheckCircle, RefreshCw } from 'lucide-react';
 import { initializeWhatsApp, disconnectWhatsApp } from '../../services/whatsappService';
 
@@ -12,49 +12,71 @@ export function WhatsAppConnection({ onConnectionChange, onQRCode }: WhatsAppCon
   const [error, setError] = useState<string>('');
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const safeSetState = (setter: (value: any) => void, value: any) => {
+    if (isMountedRef.current) {
+      setter(value);
+    }
+  };
 
   const handleGenerateQR = async () => {
-      setError('');
-      setQrCodeData('');
-      setIsConnected(false);
-    setIsLoading(true);
-      initializeWhatsApp(
-        (qr: string) => {
-          setQrCodeData(qr);
-        setIsLoading(false);
+    safeSetState(setError, '');
+    safeSetState(setQrCodeData, '');
+    safeSetState(setIsConnected, false);
+    safeSetState(setIsLoading, true);
+    
+    initializeWhatsApp(
+      (qr: string) => {
+        if (isMountedRef.current) {
+          safeSetState(setQrCodeData, qr);
+          safeSetState(setIsLoading, false);
           onQRCode(qr);
-        },
-        () => {
-          setQrCodeData('');
-          setIsConnected(true);
-        setIsLoading(false);
+        }
+      },
+      () => {
+        if (isMountedRef.current) {
+          safeSetState(setQrCodeData, '');
+          safeSetState(setIsConnected, true);
+          safeSetState(setIsLoading, false);
           onConnectionChange(true);
-        },
-        () => {
-          setQrCodeData('');
-          setIsConnected(false);
-        setIsLoading(false);
+        }
+      },
+      () => {
+        if (isMountedRef.current) {
+          safeSetState(setQrCodeData, '');
+          safeSetState(setIsConnected, false);
+          safeSetState(setIsLoading, false);
           onConnectionChange(false);
-        },
+        }
+      },
       undefined,
-        (error: string) => {
-          setError(error);
-          setIsConnected(false);
-        setIsLoading(false);
+      (error: string) => {
+        if (isMountedRef.current) {
+          safeSetState(setError, error);
+          safeSetState(setIsConnected, false);
+          safeSetState(setIsLoading, false);
+        }
       }
     );
   };
 
   const handleCloseQR = () => {
-    setQrCodeData('');
-    setError('');
-    setIsConnected(false);
-    setIsLoading(false);
+    safeSetState(setQrCodeData, '');
+    safeSetState(setError, '');
+    safeSetState(setIsConnected, false);
+    safeSetState(setIsLoading, false);
     disconnectWhatsApp();
   };
 
   const handleDisconnect = () => {
-    setIsConnected(false);
+    safeSetState(setIsConnected, false);
     disconnectWhatsApp();
     onConnectionChange(false);
   };
