@@ -320,7 +320,7 @@ export function WhatsAppBot({
         updates.customerData!.reference = message;
         
         // Montar endereço completo
-        const address = `${session.customerData.street}, ${session.customerData.number} - ${session.customerData.district}, ${session.customerData.city}`;
+        let address = `${session.customerData.street}, ${session.customerData.number} - ${session.customerData.district}, ${session.customerData.city}`;
         if (message) {
           address += ` (Ref: ${message})`;
         }

@@ -1,4 +1,7 @@
-const API_BASE_URL = window.location.origin;
+// Use relative API paths in development to work with Vite proxy
+const API_BASE_URL = import.meta.env.DEV 
+  ? '' // Use relative paths in development (proxied by Vite)
+  : window.location.origin;
 
 export interface User {
   id: string;
@@ -121,4 +124,4 @@ class AuthService {
   }
 }
 
-export const authService = new AuthService(); 
+export const authService = new AuthService();

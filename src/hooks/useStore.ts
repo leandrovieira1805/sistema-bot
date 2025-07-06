@@ -3,70 +3,277 @@ import { StoreConfig, Category, Promotion, Order, CustomerSession, Product } fro
 import { whatsappService } from '../services/whatsappService';
 import { useAuth } from '../contexts/AuthContext';
 
-const defaultStoreConfig: StoreConfig = {
-  name: 'Pizzaria Delícia',
-  greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
-  deliveryFee: 5.00,
-  pixKey: 'contato@pizzariadelicia.com.br',
-  address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
-  menuImage: 'https://exemplo.com/cardapio.jpg'
+// Configurações padrão para diferentes tipos de usuário
+const getUserDefaultConfig = (userType: string): StoreConfig => {
+  switch (userType) {
+    case 'admin':
+      return {
+        name: 'Pizzaria Delícia',
+        greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
+        deliveryFee: 5.00,
+        pixKey: 'contato@pizzariadelicia.com.br',
+        address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
+        menuImage: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800'
+      };
+    case 'evellyn':
+      return {
+        name: 'Bebidas Delícia',
+        greeting: 'Olá! Seja bem-vindo à Bebidas Delícia. Digite o número da opção desejada:\n1. Ver Catálogo de Bebidas 🥤\n2. Ver Promoções 🔥',
+        deliveryFee: 3.00,
+        pixKey: 'evellyn@bebidasdelicia.com.br',
+        address: 'Rua das Bebidas, 456 - Centro - Cidade Exemplo',
+        menuImage: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=800'
+      };
+    default:
+      return {
+        name: 'Minha Loja',
+        greeting: 'Olá! Seja bem-vindo à nossa loja. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
+        deliveryFee: 5.00,
+        pixKey: 'contato@minhaloja.com.br',
+        address: 'Endereço da loja',
+        menuImage: ''
+      };
+  }
 };
 
-const sampleCategories: Category[] = [
-  {
-    id: '1',
-    name: 'Pizzas',
-    products: [
-      {
-        id: '1',
-        name: 'Pizza de Calabresa',
-        price: 45.50,
-        image: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400',
-        categoryId: '1'
-      },
-      {
-        id: '2', 
-        name: 'Pizza Margherita',
-        price: 42.00,
-        image: 'https://images.pexels.com/photos/2147491/pexels-photo-2147491.jpeg?auto=compress&cs=tinysrgb&w=400',
-        categoryId: '1'
-      }
-    ]
-  },
-  {
-    id: '2',
-    name: 'Bebidas',
-    products: [
-      {
-        id: '3',
-        name: 'Coca-Cola 2L',
-        price: 8.00,
-        image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
-        categoryId: '2'
-      }
-    ]
+// Categorias padrão para diferentes tipos de usuário
+const getUserDefaultCategories = (userType: string): Category[] => {
+  switch (userType) {
+    case 'admin':
+      return [
+        {
+          id: '1',
+          name: 'Pizzas',
+          products: [
+            {
+              id: '1',
+              name: 'Pizza de Calabresa',
+              price: 45.50,
+              image: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '1',
+              unit: 'unit',
+              unitLabel: 'unidade',
+              packSize: 1,
+              packPrice: 0,
+              unitPrice: 45.50
+            },
+            {
+              id: '2', 
+              name: 'Pizza Margherita',
+              price: 42.00,
+              image: 'https://images.pexels.com/photos/2147491/pexels-photo-2147491.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '1',
+              unit: 'unit',
+              unitLabel: 'unidade',
+              packSize: 1,
+              packPrice: 0,
+              unitPrice: 42.00
+            },
+            {
+              id: '3',
+              name: 'Pizza Quatro Queijos',
+              price: 48.00,
+              image: 'https://images.pexels.com/photos/1146760/pexels-photo-1146760.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '1',
+              unit: 'unit',
+              unitLabel: 'unidade',
+              packSize: 1,
+              packPrice: 0,
+              unitPrice: 48.00
+            }
+          ]
+        },
+        {
+          id: '2',
+          name: 'Bebidas',
+          products: [
+            {
+              id: '4',
+              name: 'Coca-Cola 2L',
+              price: 8.00,
+              image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '2',
+              unit: 'unit',
+              unitLabel: 'unidade',
+              packSize: 1,
+              packPrice: 0,
+              unitPrice: 8.00
+            },
+            {
+              id: '5',
+              name: 'Guaraná Antarctica 2L',
+              price: 7.50,
+              image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '2',
+              unit: 'unit',
+              unitLabel: 'unidade',
+              packSize: 1,
+              packPrice: 0,
+              unitPrice: 7.50
+            }
+          ]
+        }
+      ];
+    case 'evellyn':
+      return [
+        {
+          id: '1',
+          name: 'Cervejas',
+          products: [
+            {
+              id: '1',
+              name: 'Heineken',
+              price: 4.50,
+              image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '1',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 12,
+              packPrice: 45.00,
+              unitPrice: 4.50
+            },
+            {
+              id: '2', 
+              name: 'Brahma',
+              price: 3.00,
+              image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '1',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 12,
+              packPrice: 30.00,
+              unitPrice: 3.00
+            },
+            {
+              id: '3',
+              name: 'Skol',
+              price: 2.80,
+              image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '1',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 12,
+              packPrice: 28.00,
+              unitPrice: 2.80
+            }
+          ]
+        },
+        {
+          id: '2',
+          name: 'Refrigerantes',
+          products: [
+            {
+              id: '4',
+              name: 'Coca-Cola 2L',
+              price: 8.00,
+              image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '2',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 6,
+              packPrice: 42.00,
+              unitPrice: 8.00
+            },
+            {
+              id: '5',
+              name: 'Pepsi 2L',
+              price: 7.50,
+              image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '2',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 6,
+              packPrice: 39.00,
+              unitPrice: 7.50
+            },
+            {
+              id: '6',
+              name: 'Guaraná Antarctica 2L',
+              price: 7.00,
+              image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '2',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 6,
+              packPrice: 36.00,
+              unitPrice: 7.00
+            }
+          ]
+        },
+        {
+          id: '3',
+          name: 'Bebidas Especiais',
+          products: [
+            {
+              id: '7',
+              name: 'Red Bull 250ml',
+              price: 12.00,
+              image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '3',
+              unit: 'unit',
+              unitLabel: 'unidade',
+              packSize: 1,
+              packPrice: 0,
+              unitPrice: 12.00
+            },
+            {
+              id: '8',
+              name: 'Água Crystal 500ml',
+              price: 2.50,
+              image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+              categoryId: '3',
+              unit: 'pack',
+              unitLabel: 'fardo',
+              packSize: 12,
+              packPrice: 25.00,
+              unitPrice: 2.50
+            }
+          ]
+        }
+      ];
+    default:
+      return [];
   }
-];
+};
 
 export function useStore() {
   const { user } = useAuth();
-  const [storeConfig, setStoreConfig] = useState<StoreConfig>(defaultStoreConfig);
-  const [categories, setCategories] = useState<Category[]>(sampleCategories);
+  const [storeConfig, setStoreConfig] = useState<StoreConfig>(getUserDefaultConfig('admin'));
+  const [categories, setCategories] = useState<Category[]>(getUserDefaultCategories('admin'));
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [customerSessions, setCustomerSessions] = useState<CustomerSession[]>([]);
 
-  // Carregar configurações do usuário logado
+  // Carregar configurações específicas do usuário logado
   useEffect(() => {
     if (user) {
-      // Carregar configurações específicas do usuário
+      console.log('Carregando configurações para usuário:', user.username);
+      
+      // Determinar tipo de usuário baseado no username
+      const userType = user.username.toLowerCase();
+      
+      // Carregar configurações padrão baseadas no tipo de usuário
+      const defaultConfig = getUserDefaultConfig(userType);
+      const defaultCategories = getUserDefaultCategories(userType);
+      
+      setStoreConfig(defaultConfig);
+      setCategories(defaultCategories);
+      
+      // Tentar carregar configurações salvas do usuário
       fetch(`/api/user/${user.id}/config`)
-        .then(res => res.json())
+        .then(res => {
+          if (res.ok) {
+            return res.json();
+          }
+          throw new Error('Configurações não encontradas');
+        })
         .then(config => {
+          console.log('Configurações carregadas do servidor:', config);
           setStoreConfig(config);
         })
         .catch(error => {
-          console.error('Erro ao carregar configurações do usuário:', error);
+          console.log('Usando configurações padrão para:', userType);
+          // Manter as configurações padrão já definidas
         });
     }
   }, [user]);
@@ -78,6 +285,7 @@ export function useStore() {
 
     // Receber dados da loja do backend
     socket.on('store-data', (data: any) => {
+      console.log('Dados da loja recebidos do backend:', data);
       if (data.config) setStoreConfig(data.config);
       if (data.categories) setCategories(data.categories);
       if (data.promotions) setPromotions(data.promotions);
@@ -104,6 +312,7 @@ export function useStore() {
   const syncWithBackend = (data: any) => {
     const socket = whatsappService.getSocket();
     if (socket) {
+      console.log('Sincronizando dados com backend:', data);
       socket.emit('update-store-data', data);
     }
   };
@@ -113,6 +322,8 @@ export function useStore() {
     if (!user) return;
 
     try {
+      console.log('Atualizando configurações para usuário:', user.id, config);
+      
       const response = await fetch(`/api/user/${user.id}/config`, {
         method: 'PUT',
         headers: {
@@ -123,6 +334,7 @@ export function useStore() {
 
       if (response.ok) {
         const updatedConfig = await response.json();
+        console.log('Configurações atualizadas:', updatedConfig);
         setStoreConfig(updatedConfig);
         syncWithBackend({ config: updatedConfig });
       }
@@ -215,17 +427,29 @@ export function useStore() {
       ...promotion,
       id: Date.now().toString()
     };
-    setPromotions(prev => [...prev, newPromotion]);
+    setPromotions(prev => {
+      const newPromotions = [...prev, newPromotion];
+      syncWithBackend({ promotions: newPromotions });
+      return newPromotions;
+    });
   };
 
   const updatePromotion = (id: string, updates: Partial<Promotion>) => {
-    setPromotions(prev => prev.map(promo => 
-      promo.id === id ? { ...promo, ...updates } : promo
-    ));
+    setPromotions(prev => {
+      const newPromotions = prev.map(promo => 
+        promo.id === id ? { ...promo, ...updates } : promo
+      );
+      syncWithBackend({ promotions: newPromotions });
+      return newPromotions;
+    });
   };
 
   const deletePromotion = (id: string) => {
-    setPromotions(prev => prev.filter(promo => promo.id !== id));
+    setPromotions(prev => {
+      const newPromotions = prev.filter(promo => promo.id !== id);
+      syncWithBackend({ promotions: newPromotions });
+      return newPromotions;
+    });
   };
 
   // Orders

@@ -1,4 +1,4 @@
-import { QrCode, Wifi, WifiOff, Settings, LogOut, User } from 'lucide-react';
+import { QrCode, Wifi, WifiOff, Settings, LogOut, User, Store, Package } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
@@ -10,6 +10,35 @@ interface HeaderProps {
 
 export function Header({ title, botConnected, onWhatsAppConnectionChange, onOpenWhatsAppSettings }: HeaderProps) {
   const { user, logout } = useAuth();
+
+  const getUserTypeInfo = () => {
+    if (!user) return { label: 'Usuário', icon: User, color: 'bg-gray-500' };
+    
+    const username = user.username?.toLowerCase() || '';
+    
+    if (username === 'admin') {
+      return {
+        label: 'Pizzaria Delícia',
+        icon: Store,
+        color: 'bg-red-500'
+      };
+    } else if (username === 'evellyn' || username === 'evellynlavinian') {
+      return {
+        label: 'Bebidas Delícia',
+        icon: Package,
+        color: 'bg-blue-500'
+      };
+    }
+    
+    return {
+      label: user.username || 'Usuário',
+      icon: User,
+      color: 'bg-gray-500'
+    };
+  };
+
+  const userInfo = getUserTypeInfo();
+  const UserIcon = userInfo.icon;
 
   return (
     <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
@@ -35,9 +64,9 @@ export function Header({ title, botConnected, onWhatsAppConnectionChange, onOpen
           </button>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
-              <User size={16} />
-              {user?.username}
+            <div className={`flex items-center gap-2 px-3 py-1 ${userInfo.color} text-white rounded-full text-sm`}>
+              <UserIcon size={16} />
+              {userInfo.label}
             </div>
             
             <button

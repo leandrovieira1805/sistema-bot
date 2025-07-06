@@ -5,9 +5,12 @@ import {
   TrendingUp,
   Package,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Store,
+  Truck
 } from 'lucide-react';
 import { Order, Category } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface DashboardProps {
   orders: Order[];
@@ -16,6 +19,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
+  const { user } = useAuth();
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const totalProducts = categories.reduce((sum, category) => sum + category.products.length, 0);
   const todayOrders = orders.filter(order => {
@@ -27,6 +31,23 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
   const newOrders = orders.filter(order => order.status === 'NEW').length;
   const preparingOrders = orders.filter(order => order.status === 'PREPARING').length;
   const completedOrders = orders.filter(order => order.status === 'COMPLETED').length;
+
+  // Determinar tipo de negócio baseado no usuário
+  const getBusinessType = () => {
+    if (!user) return { type: 'loja', name: 'Loja' };
+    
+    const username = user.username?.toLowerCase() || '';
+    
+    if (username === 'admin') {
+      return { type: 'pizzaria', name: 'Pizzaria Delícia' };
+    } else if (username === 'evellyn' || username === 'evellynlavinian') {
+      return { type: 'distribuidora', name: 'Bebidas Delícia' };
+    }
+    
+    return { type: 'loja', name: 'Minha Loja' };
+  };
+
+  const businessInfo = getBusinessType();
 
   const stats = [
     {
@@ -44,7 +65,7 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
       change: '+8%'
     },
     {
-      title: 'Produtos Ativos',
+      title: businessInfo.type === 'distribuidora' ? 'Produtos/Fardos' : 'Produtos Ativos',
       value: totalProducts,
       icon: Package,
       color: 'bg-purple-500',
@@ -82,6 +103,27 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      {/* Header do Dashboard */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center gap-4">
+          {businessInfo.type === 'pizzaria' ? (
+            <Store className="text-red-500" size={32} />
+          ) : businessInfo.type === 'distribuidora' ? (
+            <Truck className="text-blue-500" size={32} />
+          ) : (
+            <Store className="text-gray-500" size={32} />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">{businessInfo.name}</h1>
+            <p className="text-gray-600">
+              {businessInfo.type === 'pizzaria' && 'Sistema de pedidos para pizzaria'}
+              {businessInfo.type === 'distribuidora' && 'Sistema de vendas para distribuidora de bebidas'}
+              {businessInfo.type === 'loja' && 'Sistema de pedidos personalizado'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
@@ -151,6 +193,11 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
               <div className="text-center py-8 text-gray-500">
                 <Package size={32} className="mx-auto mb-2 opacity-50" />
                 <p>Nenhum pedido ainda</p>
+                <p className="text-sm">
+                  {businessInfo.type === 'distribuidora' 
+                    ? 'Aguardando pedidos de bebidas...' 
+                    : 'Aguardando pedidos...'}
+                </p>
               </div>
             )}
           </div>
@@ -166,7 +213,9 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
             onClick={() => onTabChange('products')}
           >
             <Package className="mx-auto mb-2 text-gray-400" size={24} />
-            <p className="text-sm font-medium text-gray-600">Adicionar Produto</p>
+            <p className="text-sm font-medium text-gray-600">
+              {businessInfo.type === 'distribuidora' ? 'Adicionar Bebida' : 'Adicionar Produto'}
+            </p>
           </button>
           
           <button

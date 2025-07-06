@@ -27,14 +27,56 @@ const PORT = process.env.PORT || 3002;
 app.use(cors());
 app.use(express.json());
 
-// Servir arquivos estáticos do build
-app.use(express.static(path.join(__dirname, 'dist')));
+// Servir arquivos estáticos do build apenas se o diretório existir
+const distPath = path.join(__dirname, 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  console.log('Servindo arquivos estáticos do diretório dist');
+} else {
+  console.log('Diretório dist não encontrado - executando apenas API');
+}
 
 let whatsappClient = null;
 let isAuthenticated = false;
 let isInitializing = false;
 let qrCodeTimeout = null;
 let currentQRCode = null;
+
+// Dados de usuários (em produção, use um banco de dados)
+let users = [
+  {
+    id: '1',
+    username: 'admin',
+    email: 'admin@exemplo.com',
+    password: 'admin123', // Em produção, use hash bcrypt
+    storeConfig: {
+      name: 'Pizzaria Delícia',
+      greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
+      deliveryFee: 5.00,
+      pixKey: 'contato@pizzariadelicia.com.br',
+      address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
+      menuImage: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '2',
+    username: 'evellyn',
+    email: 'evellynlavinian@gmail.com',
+    password: 'evellyn.nsouza',
+    storeConfig: {
+      name: 'Bebidas Delícia',
+      greeting: 'Olá! Seja bem-vindo à Bebidas Delícia. Digite o número da opção desejada:\n1. Ver Catálogo de Bebidas 🥤\n2. Ver Promoções 🔥',
+      deliveryFee: 3.00,
+      pixKey: 'evellyn@bebidasdelicia.com.br',
+      address: 'Rua das Bebidas, 456 - Centro - Cidade Exemplo',
+      menuImage: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=800'
+    },
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
 
 // Dados da loja (serão sincronizados com o frontend)
 let storeData = {
@@ -44,7 +86,7 @@ let storeData = {
     deliveryFee: 5.00,
     pixKey: 'contato@pizzariadelicia.com.br',
     address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
-    menuImage: 'https://exemplo.com/cardapio.jpg'
+    menuImage: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800'
   },
   categories: [
     {
@@ -90,37 +132,24 @@ const customerSessions = new Map();
 // Pedidos
 let orders = [];
 
-// Dados de usuários (em produção, use um banco de dados)
-let users = [
-  {
-    id: '1',
-    username: 'admin',
-    email: 'admin@exemplo.com',
-    password: 'admin123', // Em produção, use hash bcrypt
-    storeConfig: {
-      name: 'Pizzaria Delícia',
-      greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
-      deliveryFee: 5.00,
-      pixKey: 'contato@pizzariadelicia.com.br',
-      address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
-      menuImage: 'https://exemplo.com/cardapio.jpg'
-    },
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }
-];
-
 // Rotas de autenticação
 app.post('/api/auth/login', (req, res) => {
-  const { username, password } = req.body;
+  console.log('Tentativa de login:', req.body);
+  const { email, password } = req.body;
   
-  const user = users.find(u => u.username === username && u.password === password);
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+  }
+  
+  const user = users.find(u => u.email === email && u.password === password);
   
   if (user) {
     // Em produção, não envie a senha
     const { password: _, ...userWithoutPassword } = user;
+    console.log('Login bem-sucedido para:', email);
     res.json(userWithoutPassword);
   } else {
+    console.log('Login falhou para:', email);
     res.status(401).json({ message: 'Usuário ou senha inválidos' });
   }
 });
@@ -866,9 +895,37 @@ app.post('/api/whatsapp/disconnect', (req, res) => {
   res.json({ success: true, message: 'Use Socket.IO para desconectar WhatsApp' });
 });
 
-// Rota simples para servir o index.html
+// Rota simples para servir o index.html apenas se existir
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.json({ 
+      message: 'API do WhatsApp Bot funcionando!', 
+      status: 'ok',
+      note: 'Execute "npm run build" para gerar os arquivos do frontend'
+    });
+  }
+});
+
+// Rota catch-all para SPA apenas se o dist existir
+app.get('*', (req, res) => {
+  // Verificar se é uma requisição para API
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ message: 'API endpoint não encontrado' });
+  }
+  
+  // Para todas as outras rotas, servir o index.html se existir
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ 
+      message: 'Página não encontrada',
+      note: 'Execute "npm run build" para gerar os arquivos do frontend'
+    });
+  }
 });
 
 server.listen(PORT, () => {
@@ -877,4 +934,5 @@ server.listen(PORT, () => {
   console.log(`URL: http://localhost:${PORT}`);
   console.log(`Socket.IO: http://localhost:${PORT}`);
   console.log(`Frontend: http://localhost:${PORT}`);
+  console.log(`Diretório dist existe: ${fs.existsSync(path.join(__dirname, 'dist'))}`);
 });
