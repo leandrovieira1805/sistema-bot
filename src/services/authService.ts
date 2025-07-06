@@ -1,6 +1,6 @@
-// Determine the correct API base URL based on environment
+// Use relative API paths in development to work with Vite proxy
 const API_BASE_URL = import.meta.env.DEV 
-  ? 'http://localhost:3002' 
+  ? '' // Use relative paths in development (proxied by Vite)
   : window.location.origin;
 
 export interface User {
