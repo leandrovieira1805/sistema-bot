@@ -159,7 +159,7 @@ export function ProductManager({
                     Preço principal usado para cálculos (opcional)
                   </p>
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tipo de Unidade
