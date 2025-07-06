@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -25,6 +25,7 @@ function AppContent() {
   const [botConnected, setBotConnected] = useState(false);
   const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const isMountedRef = useRef(true);
 
   const {
     storeConfig,
@@ -49,6 +50,18 @@ function AppContent() {
     getAllProducts
   } = useStore();
 
+  const safeSetState = (setter: (value: any) => void, value: any) => {
+    if (isMountedRef.current) {
+      setter(value);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const handleUpdateMenuImage = (imageUrl: string) => {
     updateStoreConfig({ menuImage: imageUrl });
   };
@@ -58,12 +71,12 @@ function AppContent() {
       initializeWhatsApp(
         undefined,
         () => {
-          setBotConnected(true);
-          setShowWhatsAppModal(false);
+          safeSetState(setBotConnected, true);
+          safeSetState(setShowWhatsAppModal, false);
         },
         () => {
-          setBotConnected(false);
-          setShowWhatsAppModal(true);
+          safeSetState(setBotConnected, false);
+          safeSetState(setShowWhatsAppModal, true);
         }
       );
     }
@@ -73,7 +86,9 @@ function AppContent() {
       initIfConnected();
     } else if (socket) {
       socket.on('connect', () => {
-        initIfConnected();
+        if (isMountedRef.current) {
+          initIfConnected();
+        }
       });
     } else {
       // fallback: tenta inicializar normalmente
@@ -236,7 +251,7 @@ function AppContent() {
         );
       
       default:
-        return <Dashboard orders={orders} categories={categories} />;
+        return <Dashboard orders={orders} categories={categories} onTabChange={setActiveTab} />;
     }
   };
 

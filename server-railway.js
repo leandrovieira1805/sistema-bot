@@ -35,14 +35,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Variáveis do WhatsApp
-let whatsappClient = null;
-let isAuthenticated = false;
-let isInitializing = false;
-let qrCodeTimeout = null;
-let currentQRCode = null;
-
-// Dados de usuários
+// Dados de usuários com suas próprias configurações e produtos
 const users = [
   {
     id: '1',
@@ -57,6 +50,58 @@ const users = [
       address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
       menuImage: 'https://exemplo.com/cardapio.jpg'
     },
+    categories: [
+      {
+        id: '1',
+        name: 'Pizzas',
+        products: [
+          {
+            id: '1',
+            name: 'Pizza Margherita',
+            price: 25.00,
+            image: 'https://images.pexels.com/photos/825661/pexels-photo-825661.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '1',
+            unit: 'unit',
+            unitLabel: 'unidade',
+            packSize: 1,
+            packPrice: 0,
+            unitPrice: 25.00
+          },
+          {
+            id: '2',
+            name: 'Pizza Calabresa',
+            price: 28.00,
+            image: 'https://images.pexels.com/photos/825661/pexels-photo-825661.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '1',
+            unit: 'unit',
+            unitLabel: 'unidade',
+            packSize: 1,
+            packPrice: 0,
+            unitPrice: 28.00
+          }
+        ]
+      },
+      {
+        id: '2',
+        name: 'Bebidas',
+        products: [
+          {
+            id: '3',
+            name: 'Coca-Cola 2L',
+            price: 8.00,
+            image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '2',
+            unit: 'unit',
+            unitLabel: 'unidade',
+            packSize: 1,
+            packPrice: 0,
+            unitPrice: 8.00
+          }
+        ]
+      }
+    ],
+    promotions: [],
+    orders: [],
     createdAt: new Date(),
     updatedAt: new Date()
   },
@@ -66,128 +111,189 @@ const users = [
     email: 'evellynlavinian@gmail.com',
     password: 'evellyn.nsouza',
     storeConfig: {
-      name: 'Loja da Evellyn',
-      greeting: 'Olá! Bem-vindo à loja da Evellyn. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
-      deliveryFee: 7.00,
-      pixKey: 'evellyn@pix.com',
-      address: 'Rua da Evellyn, 456 - Centro - Cidade Exemplo',
-      menuImage: 'https://exemplo.com/cardapio-evellyn.jpg'
+      name: 'Bebidas Delícia',
+      greeting: 'Olá! Seja bem-vindo à Bebidas Delícia. Digite o número da opção desejada:\n1. Ver Catálogo de Bebidas 🥤\n2. Ver Promoções 🔥',
+      deliveryFee: 3.00,
+      pixKey: 'contato@bebidasdelicia.com.br',
+      address: 'Rua das Bebidas, 123 - Centro - Cidade Exemplo',
+      menuImage: 'https://exemplo.com/cardapio-bebidas.jpg'
     },
+    categories: [
+      {
+        id: '1',
+        name: 'Cervejas',
+        products: [
+          {
+            id: '1',
+            name: 'Heineken',
+            price: 4.50,
+            image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '1',
+            unit: 'pack',
+            unitLabel: 'fardo',
+            packSize: 12,
+            packPrice: 45.00,
+            unitPrice: 4.50
+          },
+          {
+            id: '2', 
+            name: 'Brahma',
+            price: 3.00,
+            image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '1',
+            unit: 'pack',
+            unitLabel: 'fardo',
+            packSize: 12,
+            packPrice: 30.00,
+            unitPrice: 3.00
+          }
+        ]
+      },
+      {
+        id: '2',
+        name: 'Refrigerantes',
+        products: [
+          {
+            id: '3',
+            name: 'Coca-Cola 2L',
+            price: 8.00,
+            image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '2',
+            unit: 'pack',
+            unitLabel: 'fardo',
+            packSize: 6,
+            packPrice: 42.00,
+            unitPrice: 8.00
+          },
+          {
+            id: '4',
+            name: 'Pepsi 2L',
+            price: 7.50,
+            image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '2',
+            unit: 'pack',
+            unitLabel: 'fardo',
+            packSize: 6,
+            packPrice: 39.00,
+            unitPrice: 7.50
+          }
+        ]
+      },
+      {
+        id: '3',
+        name: 'Bebidas Especiais',
+        products: [
+          {
+            id: '5',
+            name: 'Red Bull 250ml',
+            price: 12.00,
+            image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '3',
+            unit: 'unit',
+            unitLabel: 'unidade',
+            packSize: 1,
+            packPrice: 0,
+            unitPrice: 12.00
+          },
+          {
+            id: '6',
+            name: 'Água Crystal 500ml',
+            price: 2.50,
+            image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
+            categoryId: '3',
+            unit: 'pack',
+            unitLabel: 'fardo',
+            packSize: 12,
+            packPrice: 25.00,
+            unitPrice: 2.50
+          }
+        ]
+      }
+    ],
+    promotions: [],
+    orders: [],
     createdAt: new Date(),
     updatedAt: new Date()
   }
 ];
 
-// Dados da loja
-let storeData = {
-  config: {
-    name: 'Bebidas Delícia',
-    greeting: 'Olá! Seja bem-vindo à Bebidas Delícia. Digite o número da opção desejada:\n1. Ver Catálogo de Bebidas 🥤\n2. Ver Promoções 🔥',
-    deliveryFee: 3.00,
-    pixKey: 'contato@bebidasdelicia.com.br',
-    address: 'Rua das Bebidas, 123 - Centro - Cidade Exemplo',
-    menuImage: 'https://exemplo.com/cardapio-bebidas.jpg'
-  },
-  categories: [
-    {
-      id: '1',
-      name: 'Cervejas',
-      products: [
-        {
-          id: '1',
-          name: 'Heineken',
-          price: 4.50,
-          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '1',
-          unit: 'pack',
-          unitLabel: 'fardo',
-          packSize: 12,
-          packPrice: 45.00,
-          unitPrice: 4.50
-        },
-        {
-          id: '2', 
-          name: 'Brahma',
-          price: 3.00,
-          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '1',
-          unit: 'pack',
-          unitLabel: 'fardo',
-          packSize: 12,
-          packPrice: 30.00,
-          unitPrice: 3.00
-        }
-      ]
-    },
-    {
-      id: '2',
-      name: 'Refrigerantes',
-      products: [
-        {
-          id: '3',
-          name: 'Coca-Cola 2L',
-          price: 8.00,
-          image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '2',
-          unit: 'pack',
-          unitLabel: 'fardo',
-          packSize: 6,
-          packPrice: 42.00,
-          unitPrice: 8.00
-        },
-        {
-          id: '4',
-          name: 'Pepsi 2L',
-          price: 7.50,
-          image: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '2',
-          unit: 'pack',
-          unitLabel: 'fardo',
-          packSize: 6,
-          packPrice: 39.00,
-          unitPrice: 7.50
-        }
-      ]
-    },
-    {
-      id: '3',
-      name: 'Bebidas Especiais',
-      products: [
-        {
-          id: '5',
-          name: 'Red Bull 250ml',
-          price: 12.00,
-          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '3',
-          unit: 'unit',
-          unitLabel: 'unidade',
-          packSize: 1,
-          packPrice: 0,
-          unitPrice: 12.00
-        },
-        {
-          id: '6',
-          name: 'Água Crystal 500ml',
-          price: 2.50,
-          image: 'https://images.pexels.com/photos/1283219/pexels-photo-1283219.jpeg?auto=compress&cs=tinysrgb&w=400',
-          categoryId: '3',
-          unit: 'pack',
-          unitLabel: 'fardo',
-          packSize: 12,
-          packPrice: 25.00,
-          unitPrice: 2.50
-        }
-      ]
+// Função para obter dados do usuário atual
+function getCurrentUserData(userId) {
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    return null;
+  }
+  
+  return {
+    config: user.storeConfig,
+    categories: user.categories,
+    promotions: user.promotions,
+    orders: user.orders
+  };
+}
+
+// Função para atualizar dados do usuário
+function updateUserData(userId, data) {
+  const userIndex = users.findIndex(u => u.id === userId);
+  if (userIndex === -1) {
+    return false;
+  }
+  
+  if (data.config) {
+    users[userIndex].storeConfig = { ...users[userIndex].storeConfig, ...data.config };
+  }
+  if (data.categories) {
+    users[userIndex].categories = data.categories;
+  }
+  if (data.promotions) {
+    users[userIndex].promotions = data.promotions;
+  }
+  if (data.orders) {
+    users[userIndex].orders = data.orders;
+  }
+  
+  users[userIndex].updatedAt = new Date();
+  return true;
+}
+
+// Função para obter todos os produtos do usuário
+function getAllProducts(userId) {
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    return [];
+  }
+  
+  return user.categories.flatMap(category => category.products);
+}
+
+// Função para encontrar produto por nome do usuário
+function findProductByName(name, userId) {
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    return null;
+  }
+  
+  for (const category of user.categories) {
+    const product = category.products.find(p => 
+      p.name.toLowerCase().includes(name.toLowerCase())
+    );
+    if (product) {
+      return product;
     }
-  ],
-  promotions: []
-};
+  }
+  return null;
+}
 
-// Sessões de clientes
+// Variáveis do WhatsApp
+let whatsappClient = null;
+let isAuthenticated = false;
+let isInitializing = false;
+let qrCodeTimeout = null;
+let currentQRCode = null;
+let currentUserId = null; // Usuário atual conectado ao WhatsApp
+
+// Sessões de clientes (mantém separado por usuário)
 const customerSessions = new Map();
-
-// Pedidos
-let orders = [];
 
 // Sistema de IA para correção de digitações e reconhecimento
 class AIProductMatcher {
@@ -485,44 +591,6 @@ async function clearWhatsAppSession() {
   }
 }
 
-// Função para obter todos os produtos
-function getAllProducts() {
-  const products = storeData.categories.flatMap(cat => cat.products);
-  console.log('=== PRODUTOS DISPONÍVEIS ===');
-  console.log('Total de produtos:', products.length);
-  products.forEach((product, index) => {
-    console.log(`${index + 1}. ${product.name} - R$ ${product.price.toFixed(2)}`);
-  });
-  console.log('============================');
-  return products;
-}
-
-// Função para encontrar produto por nome (com IA)
-function findProductByName(name) {
-  const products = getAllProducts();
-  
-  // Usar o sistema de IA para encontrar o produto
-  const aiResult = aiMatcher.findProductWithAI(name, products);
-  
-  // Se encontrou um produto com alta confiança, retornar
-  if (aiResult.bestMatch) {
-    console.log(`IA encontrou produto: "${aiResult.bestMatch.name}" (confiança: ${(aiResult.confidence * 100).toFixed(1)}%)`);
-    return aiResult.bestMatch;
-  }
-  
-  // Fallback para o método antigo se a IA não encontrar
-  const fallbackResult = products.find(product => 
-    product.name.toLowerCase().includes(name.toLowerCase()) ||
-    name.toLowerCase().includes(product.name.toLowerCase())
-  );
-  
-  if (fallbackResult) {
-    console.log(`Fallback encontrou produto: "${fallbackResult.name}"`);
-  }
-  
-  return fallbackResult;
-}
-
 // Função para calcular total do carrinho
 function calculateCartTotal(cart) {
   const getProductPrice = (product) => {
@@ -536,7 +604,7 @@ function calculateCartTotal(cart) {
   };
 
   const subtotal = cart.reduce((total, item) => total + (getProductPrice(item.product) * item.quantity), 0);
-  const deliveryFee = storeData.config.deliveryFee;
+  const deliveryFee = getCurrentUserData(currentUserId).config.deliveryFee;
   return {
     subtotal,
     deliveryFee,
@@ -569,7 +637,7 @@ async function processCustomerMessage(message, contactName) {
       if (text === '1' || text.includes('cardápio') || text.includes('cardapio')) {
         // Enviar apenas a imagem do cardápio
         shouldSendImage = true;
-        imageUrl = storeData.config.menuImage;
+        imageUrl = getCurrentUserData(currentUserId).config.menuImage;
         
         // Enviar mensagem de aguardando pedido após a imagem
         setTimeout(() => {
@@ -587,13 +655,13 @@ async function processCustomerMessage(message, contactName) {
       } else if (text === '2' || text.includes('promoção') || text.includes('promocao')) {
         response = 'Promoções em breve! Digite 1 para ver o cardápio.';
       } else {
-        response = storeData.config.greeting;
+        response = getCurrentUserData(currentUserId).config.greeting;
       }
       break;
 
     case 'ordering':
       // Usar IA para encontrar produto
-      const aiResult = aiMatcher.findProductWithAI(text, getAllProducts());
+      const aiResult = aiMatcher.findProductWithAI(text, getAllProducts(currentUserId));
       
       if (aiResult.bestMatch) {
         const product = aiResult.bestMatch;
@@ -635,7 +703,7 @@ async function processCustomerMessage(message, contactName) {
         }
       } else {
         // Gerar resposta inteligente com sugestões
-        const smartResponse = aiMatcher.generateSmartResponse(aiResult, getAllProducts());
+        const smartResponse = aiMatcher.generateSmartResponse(aiResult, getAllProducts(currentUserId));
         response = smartResponse.message;
         
         // Se há sugestões, adicionar ao histórico para referência
@@ -728,7 +796,7 @@ async function processCustomerMessage(message, contactName) {
         
         response = '💳 *PAGAMENTO VIA PIX*\n\n';
         response += `*Valor total:* R$ ${cartTotalForPayment.total.toFixed(2)}\n`;
-        response += `*Chave PIX:* ${storeData.config.pixKey}\n\n`;
+        response += `*Chave PIX:* ${getCurrentUserData(currentUserId).config.pixKey}\n\n`;
         response += 'Após o pagamento, envie o comprovante para finalizar o pedido!';
         
         session.step = 'waiting_pix_proof';
@@ -824,7 +892,7 @@ function finalizeOrder(session, phone) {
     customerPhone: phone,
     items: [...session.cart],
     subtotal: cartTotal.subtotal,
-    deliveryFee: isDelivery ? storeData.config.deliveryFee : 0,
+    deliveryFee: isDelivery ? getCurrentUserData(currentUserId).config.deliveryFee : 0,
     total: cartTotal.total,
     address: session.customerData.address,
     deliveryType: session.customerData.deliveryType,
@@ -835,7 +903,12 @@ function finalizeOrder(session, phone) {
     createdAt: new Date()
   };
   
-  orders.push(order);
+  // Adicionar pedido ao usuário atual
+  const userIndex = users.findIndex(u => u.id === currentUserId);
+  if (userIndex !== -1) {
+    users[userIndex].orders.push(order);
+    users[userIndex].updatedAt = new Date();
+  }
   
   // Emitir evento para o frontend
   io.emit('new-order', order);
@@ -901,7 +974,7 @@ app.post('/api/ai/test', (req, res) => {
     return res.status(400).json({ message: 'Texto é obrigatório' });
   }
   
-  const products = getAllProducts();
+  const products = getAllProducts(currentUserId);
   const aiResult = aiMatcher.findProductWithAI(text, products);
   const smartResponse = aiMatcher.generateSmartResponse(aiResult, products);
   
@@ -936,6 +1009,135 @@ app.put('/api/user/:userId/config', (req, res) => {
     users[userIndex].storeConfig = { ...users[userIndex].storeConfig, ...req.body };
     users[userIndex].updatedAt = new Date();
     res.json(users[userIndex].storeConfig);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para obter dados completos do usuário (config, categorias, produtos, promoções)
+app.get('/api/user/:userId/store-data', (req, res) => {
+  const { userId } = req.params;
+  const userData = getCurrentUserData(userId);
+  
+  if (userData) {
+    res.json(userData);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para atualizar dados completos do usuário
+app.put('/api/user/:userId/store-data', (req, res) => {
+  const { userId } = req.params;
+  const success = updateUserData(userId, req.body);
+  
+  if (success) {
+    const userData = getCurrentUserData(userId);
+    res.json(userData);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para obter categorias do usuário
+app.get('/api/user/:userId/categories', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    res.json(user.categories);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para atualizar categorias do usuário
+app.put('/api/user/:userId/categories', (req, res) => {
+  const { userId } = req.params;
+  const success = updateUserData(userId, { categories: req.body });
+  
+  if (success) {
+    const user = users.find(u => u.id === userId);
+    res.json(user.categories);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para obter promoções do usuário
+app.get('/api/user/:userId/promotions', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    res.json(user.promotions);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para atualizar promoções do usuário
+app.put('/api/user/:userId/promotions', (req, res) => {
+  const { userId } = req.params;
+  const success = updateUserData(userId, { promotions: req.body });
+  
+  if (success) {
+    const user = users.find(u => u.id === userId);
+    res.json(user.promotions);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para obter pedidos do usuário
+app.get('/api/user/:userId/orders', (req, res) => {
+  const { userId } = req.params;
+  const user = users.find(u => u.id === userId);
+  
+  if (user) {
+    res.json(user.orders);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para adicionar pedido do usuário
+app.post('/api/user/:userId/orders', (req, res) => {
+  const { userId } = req.params;
+  const userIndex = users.findIndex(u => u.id === userId);
+  
+  if (userIndex !== -1) {
+    const newOrder = {
+      id: Date.now().toString(),
+      ...req.body,
+      createdAt: new Date()
+    };
+    users[userIndex].orders.push(newOrder);
+    users[userIndex].updatedAt = new Date();
+    res.json(newOrder);
+  } else {
+    res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+});
+
+// Rota para atualizar status do pedido do usuário
+app.put('/api/user/:userId/orders/:orderId', (req, res) => {
+  const { userId, orderId } = req.params;
+  const userIndex = users.findIndex(u => u.id === userId);
+  
+  if (userIndex !== -1) {
+    const orderIndex = users[userIndex].orders.findIndex(o => o.id === orderId);
+    if (orderIndex !== -1) {
+      users[userIndex].orders[orderIndex] = { 
+        ...users[userIndex].orders[orderIndex], 
+        ...req.body,
+        updatedAt: new Date()
+      };
+      users[userIndex].updatedAt = new Date();
+      res.json(users[userIndex].orders[orderIndex]);
+    } else {
+      res.status(404).json({ message: 'Pedido não encontrado' });
+    }
   } else {
     res.status(404).json({ message: 'Usuário não encontrado' });
   }
@@ -981,19 +1183,19 @@ io.on('connection', (socket) => {
     
     if (data.config) {
       console.log('Atualizando configurações...');
-      storeData.config = { ...storeData.config, ...data.config };
+      updateUserData(currentUserId, { config: { ...getCurrentUserData(currentUserId).config, ...data.config } });
     }
     if (data.categories) {
       console.log('Atualizando categorias...');
-      console.log('Categorias antigas:', storeData.categories.length);
-      storeData.categories = data.categories;
-      console.log('Categorias novas:', storeData.categories.length);
+      console.log('Categorias antigas:', getCurrentUserData(currentUserId).categories.length);
+      updateUserData(currentUserId, { categories: data.categories });
+      console.log('Categorias novas:', getCurrentUserData(currentUserId).categories.length);
       
       // Log detalhado dos produtos
-      const totalProducts = storeData.categories.reduce((sum, cat) => sum + cat.products.length, 0);
+      const totalProducts = getCurrentUserData(currentUserId).categories.reduce((sum, cat) => sum + cat.products.length, 0);
       console.log('Total de produtos após atualização:', totalProducts);
       
-      storeData.categories.forEach((cat, catIndex) => {
+      getCurrentUserData(currentUserId).categories.forEach((cat, catIndex) => {
         console.log(`Categoria ${catIndex + 1}: ${cat.name} (${cat.products.length} produtos)`);
         cat.products.forEach((prod, prodIndex) => {
           console.log(`  - ${prodIndex + 1}. ${prod.name} - R$ ${prod.price.toFixed(2)}`);
@@ -1002,9 +1204,18 @@ io.on('connection', (socket) => {
     }
     if (data.promotions) {
       console.log('Atualizando promoções...');
-      storeData.promotions = data.promotions;
+      updateUserData(currentUserId, { promotions: data.promotions });
     }
     console.log('=== DADOS ATUALIZADOS ===');
+  });
+
+  // Definir usuário atual
+  socket.on('set-current-user', (userId) => {
+    console.log('=== DEFININDO USUÁRIO ATUAL ===');
+    console.log('Usuário anterior:', currentUserId);
+    console.log('Novo usuário:', userId);
+    currentUserId = userId;
+    console.log('Usuário atual definido:', currentUserId);
   });
 
   // Inicializar WhatsApp

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { WhatsAppConnection } from '../WhatsApp/WhatsAppConnection';
 
@@ -10,18 +10,35 @@ interface WhatsAppModalProps {
 
 export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppModalProps) {
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const safeSetState = (setter: (value: any) => void, value: any) => {
+    if (isMountedRef.current) {
+      setter(value);
+    }
+  };
 
   if (!isOpen) return null;
 
   const handleQRCode = (qr: string) => {
-    setQrCode(qr); // Salva o QR Code para exibir no modal
+    safeSetState(setQrCode, qr); // Salva o QR Code para exibir no modal
   };
 
   const handleConnectionChange = (connected: boolean) => {
     onConnectionChange(connected);
     if (connected) {
-      setQrCode(null);
-      setTimeout(onClose, 300); // Delay de 300ms para evitar erro de DOM
+      safeSetState(setQrCode, null);
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          onClose();
+        }
+      }, 300); // Delay de 300ms para evitar erro de DOM
     }
   };
 
