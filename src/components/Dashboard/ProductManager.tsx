@@ -36,26 +36,32 @@ export function ProductManager({
     console.log('Tentando salvar produto:', formData);
     console.log('Validação - Nome:', formData.name.trim(), 'Preço:', formData.price);
     
-    if (formData.name.trim() && formData.price > 0) {
+    // Permitir salvar apenas com o nome, preço é opcional
+    if (formData.name.trim()) {
       console.log('Validação passou, salvando produto...');
+      
+      // Se não foi informado preço, usar 0 como padrão
+      const productData = {
+        ...formData,
+        price: formData.price || 0,
+        categoryId: category.id
+      };
+      
       if (editingId) {
         console.log('Editando produto existente:', editingId);
-        onUpdateProduct(category.id, editingId, formData);
+        onUpdateProduct(category.id, editingId, productData);
         setEditingId(null);
       } else {
         console.log('Adicionando novo produto');
-        onAddProduct(category.id, {
-          ...formData,
-          categoryId: category.id
-        });
+        onAddProduct(category.id, productData);
       }
       setFormData({ name: '', price: 0, image: '', unit: 'unit', unitLabel: 'unidade', packSize: 1, packPrice: 0, unitPrice: 0 });
       setImagePreview(null);
       setShowAddForm(false);
       console.log('Produto salvo com sucesso!');
     } else {
-      console.log('Validação falhou - Nome vazio ou preço inválido');
-      alert('Por favor, preencha o nome do produto e um preço válido.');
+      console.log('Validação falhou - Nome vazio');
+      alert('Por favor, preencha pelo menos o nome do produto.');
     }
   };
 
@@ -148,10 +154,9 @@ export function ProductManager({
                     onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="0.00"
-                    required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Preço principal usado para cálculos
+                    Preço principal usado para cálculos (opcional)
                   </p>
                 </div>
 
@@ -209,8 +214,10 @@ export function ProductManager({
                     onChange={(e) => setFormData(prev => ({ ...prev, packPrice: parseFloat(e.target.value) || 0 }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="0.00"
-                    required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Preço do fardo/caixa (opcional)
+                  </p>
                 </div>
 
                 <div>
@@ -225,8 +232,10 @@ export function ProductManager({
                     onChange={(e) => setFormData(prev => ({ ...prev, unitPrice: parseFloat(e.target.value) || 0 }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                     placeholder="0.00"
-                    required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Preço da unidade individual (opcional)
+                  </p>
                 </div>
                 
                 <div>
