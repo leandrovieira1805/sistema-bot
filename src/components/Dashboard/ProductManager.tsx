@@ -33,11 +33,17 @@ export function ProductManager({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Tentando salvar produto:', formData);
+    console.log('Validação - Nome:', formData.name.trim(), 'Preço:', formData.price);
+    
     if (formData.name.trim() && formData.price > 0) {
+      console.log('Validação passou, salvando produto...');
       if (editingId) {
+        console.log('Editando produto existente:', editingId);
         onUpdateProduct(category.id, editingId, formData);
         setEditingId(null);
       } else {
+        console.log('Adicionando novo produto');
         onAddProduct(category.id, {
           ...formData,
           categoryId: category.id
@@ -46,6 +52,10 @@ export function ProductManager({
       setFormData({ name: '', price: 0, image: '', unit: 'unit', unitLabel: 'unidade', packSize: 1, packPrice: 0, unitPrice: 0 });
       setImagePreview(null);
       setShowAddForm(false);
+      console.log('Produto salvo com sucesso!');
+    } else {
+      console.log('Validação falhou - Nome vazio ou preço inválido');
+      alert('Por favor, preencha o nome do produto e um preço válido.');
     }
   };
 
@@ -126,6 +136,25 @@ export function ProductManager({
                   />
                 </div>
                 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preço Principal (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    placeholder="0.00"
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Preço principal usado para cálculos
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Tipo de Unidade

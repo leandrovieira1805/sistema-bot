@@ -181,24 +181,32 @@ export function useStore() {
   };
 
   const updateProduct = (categoryId: string, productId: string, updates: Partial<Product>) => {
-    setCategories(prev => prev.map(cat => 
-      cat.id === categoryId 
-        ? { 
-            ...cat, 
-            products: cat.products.map(prod => 
-              prod.id === productId ? { ...prod, ...updates } : prod
-            )
-          }
-        : cat
-    ));
+    setCategories(prev => {
+      const newCategories = prev.map(cat => 
+        cat.id === categoryId 
+          ? { 
+              ...cat, 
+              products: cat.products.map(prod => 
+                prod.id === productId ? { ...prod, ...updates } : prod
+              )
+            }
+          : cat
+      );
+      syncWithBackend({ categories: newCategories });
+      return newCategories;
+    });
   };
 
   const deleteProduct = (categoryId: string, productId: string) => {
-    setCategories(prev => prev.map(cat => 
-      cat.id === categoryId 
-        ? { ...cat, products: cat.products.filter(prod => prod.id !== productId) }
-        : cat
-    ));
+    setCategories(prev => {
+      const newCategories = prev.map(cat => 
+        cat.id === categoryId 
+          ? { ...cat, products: cat.products.filter(prod => prod.id !== productId) }
+          : cat
+      );
+      syncWithBackend({ categories: newCategories });
+      return newCategories;
+    });
   };
 
   // Promotions
