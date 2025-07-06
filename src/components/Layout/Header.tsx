@@ -14,15 +14,15 @@ export function Header({ title, botConnected, onWhatsAppConnectionChange, onOpen
   const getUserTypeInfo = () => {
     if (!user) return { label: 'Usuário', icon: User, color: 'bg-gray-500' };
     
-    const username = user.username?.toLowerCase() || '';
+    const email = user.email?.toLowerCase() || '';
     
-    if (username === 'admin') {
+    if (email === 'admin@exemplo.com') {
       return {
         label: 'Pizzaria Delícia',
         icon: Store,
         color: 'bg-red-500'
       };
-    } else if (username === 'evellyn' || username === 'evellynlavinian') {
+    } else if (email === 'evellynlavinian@gmail.com') {
       return {
         label: 'Bebidas Delícia',
         icon: Package,
@@ -31,7 +31,7 @@ export function Header({ title, botConnected, onWhatsAppConnectionChange, onOpen
     }
     
     return {
-      label: user.username || 'Usuário',
+      label: user.email || 'Usuário',
       icon: User,
       color: 'bg-gray-500'
     };

@@ -36,11 +36,11 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
   const getBusinessType = () => {
     if (!user) return { type: 'loja', name: 'Loja' };
     
-    const username = user.username?.toLowerCase() || '';
+    const email = user.email?.toLowerCase() || '';
     
-    if (username === 'admin') {
+    if (email === 'admin@exemplo.com') {
       return { type: 'pizzaria', name: 'Pizzaria Delícia' };
-    } else if (username === 'evellyn' || username === 'evellynlavinian') {
+    } else if (email === 'evellynlavinian@gmail.com') {
       return { type: 'distribuidora', name: 'Bebidas Delícia' };
     }
     
