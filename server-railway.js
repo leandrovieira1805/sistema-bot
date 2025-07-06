@@ -445,7 +445,14 @@ async function clearWhatsAppSession() {
 
 // Função para obter todos os produtos
 function getAllProducts() {
-  return storeData.categories.flatMap(cat => cat.products);
+  const products = storeData.categories.flatMap(cat => cat.products);
+  console.log('=== PRODUTOS DISPONÍVEIS ===');
+  console.log('Total de produtos:', products.length);
+  products.forEach((product, index) => {
+    console.log(`${index + 1}. ${product.name} - R$ ${product.price.toFixed(2)}`);
+  });
+  console.log('============================');
+  return products;
 }
 
 // Função para encontrar produto por nome (com IA)
@@ -927,17 +934,35 @@ io.on('connection', (socket) => {
 
   // Atualizar dados da loja
   socket.on('update-store-data', (data) => {
-    console.log('Atualizando dados da loja:', data);
+    console.log('=== ATUALIZANDO DADOS DA LOJA ===');
+    console.log('Dados recebidos:', JSON.stringify(data, null, 2));
+    
     if (data.config) {
+      console.log('Atualizando configurações...');
       storeData.config = { ...storeData.config, ...data.config };
     }
     if (data.categories) {
+      console.log('Atualizando categorias...');
+      console.log('Categorias antigas:', storeData.categories.length);
       storeData.categories = data.categories;
+      console.log('Categorias novas:', storeData.categories.length);
+      
+      // Log detalhado dos produtos
+      const totalProducts = storeData.categories.reduce((sum, cat) => sum + cat.products.length, 0);
+      console.log('Total de produtos após atualização:', totalProducts);
+      
+      storeData.categories.forEach((cat, catIndex) => {
+        console.log(`Categoria ${catIndex + 1}: ${cat.name} (${cat.products.length} produtos)`);
+        cat.products.forEach((prod, prodIndex) => {
+          console.log(`  - ${prodIndex + 1}. ${prod.name} - R$ ${prod.price.toFixed(2)}`);
+        });
+      });
     }
     if (data.promotions) {
+      console.log('Atualizando promoções...');
       storeData.promotions = data.promotions;
     }
-    console.log('Dados da loja atualizados:', storeData);
+    console.log('=== DADOS ATUALIZADOS ===');
   });
 
   // Inicializar WhatsApp
