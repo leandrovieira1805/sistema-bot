@@ -207,13 +207,30 @@ class AIProductMatcher {
     
     // Correções comuns de digitação
     this.commonTypos = {
-      'piza': 'pizza', 'piza': 'pizza', 'pizz': 'pizza', 'pizzza': 'pizza',
-      'hamburguer': 'hambúrguer', 'hamburguer': 'hambúrguer', 'hamburguer': 'hambúrguer',
-      'refrigerante': 'refrigerante', 'refri': 'refrigerante', 'refrigerante': 'refrigerante',
+      'piza': 'pizza', 'pizz': 'pizza', 'pizzza': 'pizza',
+      'hamburguer': 'hambúrguer', 'hamburguer': 'hambúrguer',
+      'refrigerante': 'refrigerante', 'refri': 'refrigerante',
       'batata': 'batata frita', 'batatas': 'batata frita', 'fritas': 'batata frita',
       'suco': 'suco natural', 'sucos': 'suco natural', 'natural': 'suco natural',
       'sobremesa': 'sobremesa', 'sobremesas': 'sobremesa', 'doce': 'sobremesa',
-      'salada': 'salada', 'saladas': 'salada', 'verdura': 'salada'
+      'salada': 'salada', 'saladas': 'salada', 'verdura': 'salada',
+      // Adicionar variações para Coca-Cola
+      'coca': 'coca cola', 'coca cola': 'coca cola', 'cocacola': 'coca cola',
+      'coca-cola': 'coca cola', 'coca cola 2l': 'coca cola 2l', 'coca 2l': 'coca cola 2l',
+      'coca cola 2 litros': 'coca cola 2l', 'coca 2 litros': 'coca cola 2l',
+      'refrigerante coca': 'coca cola 2l', 'refri coca': 'coca cola 2l',
+      // Adicionar variações para Pepsi
+      'pepsi': 'pepsi 2l', 'pepsi 2 litros': 'pepsi 2l', 'refrigerante pepsi': 'pepsi 2l',
+      // Adicionar variações para Heineken
+      'heineken': 'heineken', 'cerveja heineken': 'heineken', 'heineken cerveja': 'heineken',
+      // Adicionar variações para Brahma
+      'brahma': 'brahma', 'cerveja brahma': 'brahma', 'brahma cerveja': 'brahma',
+      // Adicionar variações para Red Bull
+      'red bull': 'red bull 250ml', 'redbull': 'red bull 250ml', 'energetico': 'red bull 250ml',
+      'energético': 'red bull 250ml', 'red bull 250': 'red bull 250ml',
+      // Adicionar variações para Água
+      'agua': 'agua crystal 500ml', 'água': 'agua crystal 500ml', 'agua crystal': 'agua crystal 500ml',
+      'água crystal': 'agua crystal 500ml', 'agua 500ml': 'agua crystal 500ml'
     };
   }
 
@@ -251,13 +268,22 @@ class AIProductMatcher {
 
   // Normalizar texto removendo acentos e caracteres especiais
   normalizeText(text) {
-    return text
+    let normalized = text
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9\s]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+    
+    // Aplicar correções comuns
+    for (const [wrong, correct] of Object.entries(this.commonTypos)) {
+      if (normalized.includes(wrong)) {
+        normalized = normalized.replace(wrong, correct);
+      }
+    }
+    
+    return normalized;
   }
 
   // Extrair números do texto
@@ -311,6 +337,11 @@ class AIProductMatcher {
     const normalizedInput = this.normalizeText(inputText);
     const correctedInput = this.correctCommonTypos(normalizedInput);
     
+    console.log(`=== BUSCA DE PRODUTO ===`);
+    console.log(`Input original: "${inputText}"`);
+    console.log(`Input normalizado: "${normalizedInput}"`);
+    console.log(`Input corrigido: "${correctedInput}"`);
+    
     // Extrair números do input
     const numbers = this.extractNumbers(inputText);
     
@@ -320,12 +351,15 @@ class AIProductMatcher {
       .filter(word => !this.stopWords.includes(word) && word.length > 2)
       .join(' ');
 
+    console.log(`Palavras relevantes: "${relevantWords}"`);
+
     let bestMatch = null;
     let bestScore = 0;
     let suggestions = [];
 
     for (const product of products) {
       const normalizedProductName = this.normalizeText(product.name);
+      console.log(`Comparando com: "${product.name}" (normalizado: "${normalizedProductName}")`);
       
       // Calcular similaridade com o nome do produto
       const nameSimilarity = this.calculateSimilarity(relevantWords, normalizedProductName);
@@ -348,6 +382,8 @@ class AIProductMatcher {
       // Score final combinando similaridade e palavras-chave
       const finalScore = (nameSimilarity * 0.6) + (keywordScore * 0.4);
       
+      console.log(`Score para "${product.name}": ${(finalScore * 100).toFixed(1)}% (similaridade: ${(nameSimilarity * 100).toFixed(1)}%, keywords: ${(keywordScore * 100).toFixed(1)}%)`);
+      
       if (finalScore > bestScore) {
         bestScore = finalScore;
         bestMatch = product;
@@ -366,13 +402,19 @@ class AIProductMatcher {
     // Ordenar sugestões por score
     suggestions.sort((a, b) => b.score - a.score);
 
-    return {
+    const result = {
       bestMatch: bestScore > 0.5 ? bestMatch : null,
-      suggestions: suggestions.slice(0, 3),
+      suggestions: suggestions.slice(0, 3), // Limitar a 3 sugestões
       confidence: bestScore,
-      numbers: numbers,
-      correctedInput: correctedInput
+      correctedInput: correctedInput,
+      numbers: numbers
     };
+
+    console.log(`Melhor match: ${bestMatch ? bestMatch.name : 'Nenhum'} (confiança: ${(bestScore * 100).toFixed(1)}%)`);
+    console.log(`Sugestões: ${suggestions.length}`);
+    console.log(`========================`);
+
+    return result;
   }
 
   // Gerar resposta inteligente
