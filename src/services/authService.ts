@@ -1,4 +1,7 @@
-const API_BASE_URL = window.location.origin;
+// Determine the correct API base URL based on environment
+const API_BASE_URL = import.meta.env.DEV 
+  ? 'http://localhost:3002' 
+  : window.location.origin;
 
 export interface User {
   id: string;
@@ -121,4 +124,4 @@ class AuthService {
   }
 }
 
-export const authService = new AuthService(); 
+export const authService = new AuthService();
