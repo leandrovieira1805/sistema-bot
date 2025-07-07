@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { QrCode, Smartphone, X, CheckCircle, RefreshCw } from 'lucide-react';
 import { initializeWhatsApp, disconnectWhatsApp } from '../../services/whatsappService';
+import { flushSync } from 'react-dom';
 
 interface WhatsAppConnectionProps {
   onConnectionChange: (connected: boolean) => void;
@@ -13,114 +14,184 @@ export function WhatsAppConnection({ onConnectionChange, onQRCode }: WhatsAppCon
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isRendering, setIsRendering] = useState(true);
+  const [shouldRender, setShouldRender] = useState(false);
   const isMountedRef = useRef(true);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stateUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Delay para garantir que o componente está totalmente montado
     const timer = setTimeout(() => {
       if (isMountedRef.current) {
         setIsRendering(false);
+        setShouldRender(true);
       }
-    }, 100);
+    }, 200); // Aumentado para 200ms
 
     return () => {
       isMountedRef.current = false;
       if (initTimeoutRef.current) {
         clearTimeout(initTimeoutRef.current);
       }
+      if (stateUpdateTimeoutRef.current) {
+        clearTimeout(stateUpdateTimeoutRef.current);
+      }
       clearTimeout(timer);
     };
   }, []);
 
   const safeSetState = (setter: (value: any) => void, value: any) => {
-    if (isMountedRef.current && !isRendering) {
-      setter(value);
+    if (isMountedRef.current && !isRendering && shouldRender) {
+      // Usar flushSync para garantir que as mudanças de estado sejam aplicadas imediatamente
+      try {
+        flushSync(() => {
+          setter(value);
+        });
+      } catch (error) {
+        console.error('Erro ao atualizar estado:', error);
+        // Fallback para setState normal se flushSync falhar
+        setter(value);
+      }
+    }
+  };
+
+  const safeUpdateMultipleStates = (updates: Array<{ setter: (value: any) => void; value: any }>) => {
+    if (isMountedRef.current && !isRendering && shouldRender) {
+      try {
+        flushSync(() => {
+          updates.forEach(({ setter, value }) => {
+            setter(value);
+          });
+        });
+      } catch (error) {
+        console.error('Erro ao atualizar múltiplos estados:', error);
+        // Fallback para updates normais
+        updates.forEach(({ setter, value }) => {
+          setter(value);
+        });
+      }
     }
   };
 
   const handleGenerateQR = async () => {
-    if (isRendering) return; // Não executar durante renderização
+    if (isRendering || !shouldRender) return;
     
-    safeSetState(setError, '');
-    safeSetState(setQrCodeData, '');
-    safeSetState(setIsConnected, false);
-    safeSetState(setIsLoading, true);
+    // Limpar timeouts anteriores
+    if (initTimeoutRef.current) {
+      clearTimeout(initTimeoutRef.current);
+    }
+    if (stateUpdateTimeoutRef.current) {
+      clearTimeout(stateUpdateTimeoutRef.current);
+    }
+    
+    // Resetar estados de forma segura
+    safeUpdateMultipleStates([
+      { setter: setError, value: '' },
+      { setter: setQrCodeData, value: '' },
+      { setter: setIsConnected, value: false },
+      { setter: setIsLoading, value: true }
+    ]);
     
     // Delay para evitar conflitos de estado
     initTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
+      if (isMountedRef.current && shouldRender) {
         initializeWhatsApp(
           (qr: string) => {
-            if (isMountedRef.current && !isRendering) {
+            if (isMountedRef.current && shouldRender) {
               // Delay adicional para o callback onQR
-              setTimeout(() => {
-                if (isMountedRef.current && !isRendering) {
-                  safeSetState(setQrCodeData, qr);
-                  safeSetState(setIsLoading, false);
+              stateUpdateTimeoutRef.current = setTimeout(() => {
+                if (isMountedRef.current && shouldRender) {
+                  safeUpdateMultipleStates([
+                    { setter: setQrCodeData, value: qr },
+                    { setter: setIsLoading, value: false }
+                  ]);
                   onQRCode(qr);
                 }
-              }, 50);
+              }, 100);
             }
           },
           () => {
-            if (isMountedRef.current && !isRendering) {
+            if (isMountedRef.current && shouldRender) {
               // Delay maior para o callback onReady (onde o erro acontece)
-              setTimeout(() => {
-                if (isMountedRef.current && !isRendering) {
-                  console.log('Executando callback onReady com proteção...');
-                  safeSetState(setQrCodeData, '');
-                  safeSetState(setIsConnected, true);
-                  safeSetState(setIsLoading, false);
-                  onConnectionChange(true);
-                  console.log('Callback onReady executado com sucesso');
+              stateUpdateTimeoutRef.current = setTimeout(() => {
+                if (isMountedRef.current && shouldRender) {
+                  console.log('Executando callback onReady com proteção máxima...');
+                  
+                  // Desabilitar renderização temporariamente
+                  setShouldRender(false);
+                  
+                  // Aguardar um ciclo de renderização
+                  setTimeout(() => {
+                    if (isMountedRef.current) {
+                      safeUpdateMultipleStates([
+                        { setter: setQrCodeData, value: '' },
+                        { setter: setIsConnected, value: true },
+                        { setter: setIsLoading, value: false }
+                      ]);
+                      
+                      // Reabilitar renderização
+                      setTimeout(() => {
+                        if (isMountedRef.current) {
+                          setShouldRender(true);
+                          onConnectionChange(true);
+                          console.log('Callback onReady executado com sucesso');
+                        }
+                      }, 50);
+                    }
+                  }, 50);
                 }
-              }, 150);
+              }, 200);
             }
           },
           () => {
-            if (isMountedRef.current && !isRendering) {
+            if (isMountedRef.current && shouldRender) {
               // Delay para o callback onDisconnected
-              setTimeout(() => {
-                if (isMountedRef.current && !isRendering) {
-                  safeSetState(setQrCodeData, '');
-                  safeSetState(setIsConnected, false);
-                  safeSetState(setIsLoading, false);
+              stateUpdateTimeoutRef.current = setTimeout(() => {
+                if (isMountedRef.current && shouldRender) {
+                  safeUpdateMultipleStates([
+                    { setter: setQrCodeData, value: '' },
+                    { setter: setIsConnected, value: false },
+                    { setter: setIsLoading, value: false }
+                  ]);
                   onConnectionChange(false);
                 }
-              }, 50);
+              }, 100);
             }
           },
           undefined,
           (error: string) => {
-            if (isMountedRef.current && !isRendering) {
+            if (isMountedRef.current && shouldRender) {
               // Delay para o callback onError
-              setTimeout(() => {
-                if (isMountedRef.current && !isRendering) {
-                  safeSetState(setError, error);
-                  safeSetState(setIsConnected, false);
-                  safeSetState(setIsLoading, false);
+              stateUpdateTimeoutRef.current = setTimeout(() => {
+                if (isMountedRef.current && shouldRender) {
+                  safeUpdateMultipleStates([
+                    { setter: setError, value: error },
+                    { setter: setIsConnected, value: false },
+                    { setter: setIsLoading, value: false }
+                  ]);
                 }
-              }, 50);
+              }, 100);
             }
           }
         );
       }
-    }, 200);
+    }, 300); // Aumentado para 300ms
   };
 
   const handleCloseQR = () => {
-    if (isRendering) return;
+    if (isRendering || !shouldRender) return;
     
-    safeSetState(setQrCodeData, '');
-    safeSetState(setError, '');
-    safeSetState(setIsConnected, false);
-    safeSetState(setIsLoading, false);
+    safeUpdateMultipleStates([
+      { setter: setQrCodeData, value: '' },
+      { setter: setError, value: '' },
+      { setter: setIsConnected, value: false },
+      { setter: setIsLoading, value: false }
+    ]);
     disconnectWhatsApp();
   };
 
   const handleDisconnect = () => {
-    if (isRendering) return;
+    if (isRendering || !shouldRender) return;
     
     safeSetState(setIsConnected, false);
     disconnectWhatsApp();
@@ -128,7 +199,7 @@ export function WhatsAppConnection({ onConnectionChange, onQRCode }: WhatsAppCon
   };
 
   // Não renderizar durante a inicialização
-  if (isRendering) {
+  if (isRendering || !shouldRender) {
     return (
       <div className="bg-white rounded-lg shadow-md p-6 min-h-[400px] flex flex-col items-center justify-center">
         <div className="flex items-center gap-3 mb-6">
