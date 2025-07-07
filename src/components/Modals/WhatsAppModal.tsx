@@ -10,13 +10,25 @@ interface WhatsAppModalProps {
 
 export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppModalProps) {
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const isMountedRef = useRef(true);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
     };
   }, []);
+
+  // Reset closing state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setIsClosing(false);
+    }
+  }, [isOpen]);
 
   const safeSetState = (setter: (value: any) => void, value: any) => {
     if (isMountedRef.current) {
@@ -24,21 +36,41 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
     }
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    if (isClosing) return; // Evita múltiplos fechamentos
+    
+    safeSetState(setIsClosing, true);
+    
+    // Limpar timeout anterior se existir
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    
+    // Delay maior para evitar erro de DOM
+    closeTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        onClose();
+        safeSetState(setIsClosing, false);
+      }
+    }, 500); // Aumentado para 500ms
+  };
+
+  if (!isOpen || isClosing) return null;
 
   const handleQRCode = (qr: string) => {
-    safeSetState(setQrCode, qr); // Salva o QR Code para exibir no modal
+    safeSetState(setQrCode, qr);
   };
 
   const handleConnectionChange = (connected: boolean) => {
     onConnectionChange(connected);
     if (connected) {
       safeSetState(setQrCode, null);
+      // Delay maior para conexão bem-sucedida
       setTimeout(() => {
         if (isMountedRef.current) {
-          onClose();
+          handleClose();
         }
-      }, 300); // Delay de 300ms para evitar erro de DOM
+      }, 800); // Aumentado para 800ms
     }
   };
 
@@ -48,8 +80,9 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
           <h3 className="text-lg font-semibold text-gray-800">Configuração WhatsApp</h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={isClosing}
           >
             <X size={24} />
           </button>

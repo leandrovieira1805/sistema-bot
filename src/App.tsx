@@ -97,11 +97,11 @@ function AppContent() {
   }, []);
 
   const handleOpenWhatsAppSettings = () => {
-    setShowWhatsAppModal(true);
+    safeSetState(setShowWhatsAppModal, true);
   };
 
   const handleWhatsAppConnectionChange = (connected: boolean) => {
-    setBotConnected(connected);
+    safeSetState(setBotConnected, connected);
   };
 
   const getPageTitle = () => {
@@ -261,7 +261,13 @@ function AppContent() {
         activeTab={activeTab}
         onTabChange={(tab) => {
           setActiveTab(tab);
-          if (tab === 'bot') setShowWhatsAppModal(true);
+          if (tab === 'bot' && !showWhatsAppModal) {
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                setShowWhatsAppModal(true);
+              }
+            }, 100);
+          }
         }}
       />
       
@@ -290,7 +296,11 @@ function AppContent() {
       {showWhatsAppModal && (
         <WhatsAppModal
           isOpen={showWhatsAppModal}
-          onClose={() => setShowWhatsAppModal(false)}
+          onClose={() => {
+            if (isMountedRef.current) {
+              setShowWhatsAppModal(false);
+            }
+          }}
           onConnectionChange={handleWhatsAppConnectionChange}
         />
       )}

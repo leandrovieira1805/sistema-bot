@@ -12,62 +12,84 @@ export function WhatsAppConnection({ onConnectionChange, onQRCode }: WhatsAppCon
   const [error, setError] = useState<string>('');
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRendering, setIsRendering] = useState(true);
   const isMountedRef = useRef(true);
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Delay para garantir que o componente está totalmente montado
+    const timer = setTimeout(() => {
+      if (isMountedRef.current) {
+        setIsRendering(false);
+      }
+    }, 100);
+
     return () => {
       isMountedRef.current = false;
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+      }
+      clearTimeout(timer);
     };
   }, []);
 
   const safeSetState = (setter: (value: any) => void, value: any) => {
-    if (isMountedRef.current) {
+    if (isMountedRef.current && !isRendering) {
       setter(value);
     }
   };
 
   const handleGenerateQR = async () => {
+    if (isRendering) return; // Não executar durante renderização
+    
     safeSetState(setError, '');
     safeSetState(setQrCodeData, '');
     safeSetState(setIsConnected, false);
     safeSetState(setIsLoading, true);
     
-      initializeWhatsApp(
-        (qr: string) => {
-        if (isMountedRef.current) {
-          safeSetState(setQrCodeData, qr);
-          safeSetState(setIsLoading, false);
-          onQRCode(qr);
-        }
-        },
-        () => {
-        if (isMountedRef.current) {
-          safeSetState(setQrCodeData, '');
-          safeSetState(setIsConnected, true);
-          safeSetState(setIsLoading, false);
-          onConnectionChange(true);
-        }
-        },
-        () => {
-        if (isMountedRef.current) {
-          safeSetState(setQrCodeData, '');
-          safeSetState(setIsConnected, false);
-          safeSetState(setIsLoading, false);
-          onConnectionChange(false);
-        }
-        },
-      undefined,
-        (error: string) => {
-        if (isMountedRef.current) {
-          safeSetState(setError, error);
-          safeSetState(setIsConnected, false);
-          safeSetState(setIsLoading, false);
-        }
+    // Delay para evitar conflitos de estado
+    initTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        initializeWhatsApp(
+          (qr: string) => {
+            if (isMountedRef.current && !isRendering) {
+              safeSetState(setQrCodeData, qr);
+              safeSetState(setIsLoading, false);
+              onQRCode(qr);
+            }
+          },
+          () => {
+            if (isMountedRef.current && !isRendering) {
+              safeSetState(setQrCodeData, '');
+              safeSetState(setIsConnected, true);
+              safeSetState(setIsLoading, false);
+              onConnectionChange(true);
+            }
+          },
+          () => {
+            if (isMountedRef.current && !isRendering) {
+              safeSetState(setQrCodeData, '');
+              safeSetState(setIsConnected, false);
+              safeSetState(setIsLoading, false);
+              onConnectionChange(false);
+            }
+          },
+          undefined,
+          (error: string) => {
+            if (isMountedRef.current && !isRendering) {
+              safeSetState(setError, error);
+              safeSetState(setIsConnected, false);
+              safeSetState(setIsLoading, false);
+            }
+          }
+        );
       }
-    );
+    }, 200);
   };
 
   const handleCloseQR = () => {
+    if (isRendering) return;
+    
     safeSetState(setQrCodeData, '');
     safeSetState(setError, '');
     safeSetState(setIsConnected, false);
@@ -76,10 +98,30 @@ export function WhatsAppConnection({ onConnectionChange, onQRCode }: WhatsAppCon
   };
 
   const handleDisconnect = () => {
+    if (isRendering) return;
+    
     safeSetState(setIsConnected, false);
     disconnectWhatsApp();
     onConnectionChange(false);
   };
+
+  // Não renderizar durante a inicialização
+  if (isRendering) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 min-h-[400px] flex flex-col items-center justify-center">
+        <div className="flex items-center gap-3 mb-6">
+          <Smartphone className="text-green-600" size={24} />
+          <h3 className="text-xl font-semibold text-gray-800">Conexão WhatsApp</h3>
+        </div>
+        <div className="flex flex-col items-center">
+          <RefreshCw size={64} className="mx-auto text-gray-400 mb-4 animate-spin" />
+          <h4 className="text-lg font-medium text-gray-800 mb-2">
+            Inicializando...
+          </h4>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 min-h-[400px] flex flex-col items-center justify-center">
