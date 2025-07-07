@@ -12,6 +12,7 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isProcessingConnection, setIsProcessingConnection] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const isMountedRef = useRef(true);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -28,11 +29,12 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
     };
   }, []);
 
-  // Reset closing state when modal opens
+  // Reset states when modal opens
   useEffect(() => {
     if (isOpen) {
       setIsClosing(false);
       setIsProcessingConnection(false);
+      setIsConnecting(false);
     }
   }, [isOpen]);
 
@@ -43,56 +45,60 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
   };
 
   const handleClose = () => {
-    if (isClosing || isProcessingConnection) return; // Evita múltiplos fechamentos
+    if (isClosing || isProcessingConnection || isConnecting) return;
     
     safeSetState(setIsClosing, true);
     
-    // Limpar timeout anterior se existir
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
     }
     
-    // Delay maior para evitar erro de DOM
     closeTimeoutRef.current = setTimeout(() => {
       if (isMountedRef.current) {
         onClose();
         safeSetState(setIsClosing, false);
       }
-    }, 1000); // Aumentado para 1000ms
+    }, 1000);
   };
 
-  if (!isOpen || isClosing) return null;
+  // Não renderizar nada se estiver fechando ou conectando
+  if (!isOpen || isClosing || isConnecting) {
+    return null;
+  }
 
   const handleQRCode = (qr: string) => {
     safeSetState(setQrCode, qr);
   };
 
   const handleConnectionChange = (connected: boolean) => {
-    if (isProcessingConnection) return; // Evita múltiplas execuções
+    if (isProcessingConnection || isConnecting) return;
     
     safeSetState(setIsProcessingConnection, true);
     
-    // Limpar timeout anterior se existir
     if (connectionTimeoutRef.current) {
       clearTimeout(connectionTimeoutRef.current);
     }
     
-    // Delay para evitar conflitos de estado
     connectionTimeoutRef.current = setTimeout(() => {
       if (isMountedRef.current) {
         onConnectionChange(connected);
+        
         if (connected) {
+          // Desabilitar completamente o modal durante conexão
+          safeSetState(setIsConnecting, true);
           safeSetState(setQrCode, null);
-          // Delay muito maior para conexão bem-sucedida
+          
+          // Fechar o modal após um delay maior
           setTimeout(() => {
             if (isMountedRef.current) {
               handleClose();
             }
-          }, 1500); // Aumentado para 1500ms
+          }, 2000); // Delay muito maior
         }
+        
         safeSetState(setIsProcessingConnection, false);
       }
-    }, 300); // Delay maior para processamento
+    }, 500); // Delay maior para processamento
   };
 
   return (
@@ -103,7 +109,7 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
-            disabled={isClosing || isProcessingConnection}
+            disabled={isClosing || isProcessingConnection || isConnecting}
           >
             <X size={24} />
           </button>
