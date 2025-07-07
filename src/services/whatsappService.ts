@@ -22,6 +22,24 @@ class WhatsAppService {
     this.connect();
   }
 
+  // Função segura para executar callbacks
+  private safeExecuteCallback(callback: () => void, name: string) {
+    try {
+      // Executar de forma assíncrona para evitar bloqueios de DOM
+      setTimeout(() => {
+        try {
+          console.log(`Executando callback ${name} de forma segura...`);
+          callback();
+          console.log(`Callback ${name} executado com sucesso`);
+        } catch (error) {
+          console.error(`Erro ao executar callback ${name}:`, error);
+        }
+      }, 0);
+    } catch (error) {
+      console.error(`Erro ao agendar callback ${name}:`, error);
+    }
+  }
+
   private connect() {
     console.log('=== WHATSAPP SERVICE: Conectando ao servidor ===');
     console.log('Socket URL:', SOCKET_URL);
@@ -42,35 +60,36 @@ class WhatsAppService {
       console.log('QR Code válido?', !!qrCodeDataUrl && qrCodeDataUrl.length > 100);
       console.log('Primeiros 50 chars:', qrCodeDataUrl?.substring(0, 50) + '...');
       
-      // Sempre chamar o callback (agora sempre definido)
-      console.log('Chamando callback onQR...');
-      this.callbacks.onQR(qrCodeDataUrl);
-      console.log('Callback onQR executado');
+      // Executar callback de forma segura
+      this.safeExecuteCallback(() => this.callbacks.onQR(qrCodeDataUrl), 'onQR');
     });
 
     this.socket.on('whatsapp-status', (status: { connected: boolean; status: string }) => {
       console.log('📱 Status WhatsApp recebido:', status);
       if (status.connected) {
-        console.log('Chamando callback onReady...');
-        this.callbacks.onReady();
+        console.log('Chamando callback onReady de forma segura...');
+        // Delay adicional para o callback onReady
+        setTimeout(() => {
+          this.safeExecuteCallback(() => this.callbacks.onReady(), 'onReady');
+        }, 100);
       } else if (
         !status.connected &&
         status.status !== 'qr_received' &&
         status.status !== 'initializing'
       ) {
-        console.log('Chamando callback onDisconnected...');
-        this.callbacks.onDisconnected();
+        console.log('Chamando callback onDisconnected de forma segura...');
+        this.safeExecuteCallback(() => this.callbacks.onDisconnected(), 'onDisconnected');
       }
     });
 
     this.socket.on('message-received', (message: any) => {
       console.log('📨 Mensagem recebida:', message);
-      this.callbacks.onMessage(message);
+      this.safeExecuteCallback(() => this.callbacks.onMessage(message), 'onMessage');
     });
 
     this.socket.on('error', (error: string) => {
       console.error('❌ Erro do servidor:', error);
-      this.callbacks.onError(error);
+      this.safeExecuteCallback(() => this.callbacks.onError(error), 'onError');
     });
   }
 
@@ -110,7 +129,10 @@ class WhatsAppService {
       console.log('Socket existe?', !!this.socket);
       console.log('Socket conectado?', this.socket?.connected);
       if (onError) {
-        onError('Socket não está conectado');
+        // Executar callback de erro de forma segura
+        setTimeout(() => {
+          this.safeExecuteCallback(() => onError('Socket não está conectado'), 'onError');
+        }, 0);
       }
     }
   }

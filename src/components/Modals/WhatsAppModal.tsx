@@ -62,16 +62,21 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
   };
 
   const handleConnectionChange = (connected: boolean) => {
-    onConnectionChange(connected);
-    if (connected) {
-      safeSetState(setQrCode, null);
-      // Delay maior para conexão bem-sucedida
-      setTimeout(() => {
-        if (isMountedRef.current) {
-          handleClose();
+    // Delay para evitar conflitos de estado
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        onConnectionChange(connected);
+        if (connected) {
+          safeSetState(setQrCode, null);
+          // Delay maior para conexão bem-sucedida
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              handleClose();
+            }
+          }, 800); // Aumentado para 800ms
         }
-      }, 800); // Aumentado para 800ms
-    }
+      }
+    }, 100);
   };
 
   return (

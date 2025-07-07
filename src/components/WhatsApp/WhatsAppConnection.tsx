@@ -53,33 +53,55 @@ export function WhatsAppConnection({ onConnectionChange, onQRCode }: WhatsAppCon
         initializeWhatsApp(
           (qr: string) => {
             if (isMountedRef.current && !isRendering) {
-              safeSetState(setQrCodeData, qr);
-              safeSetState(setIsLoading, false);
-              onQRCode(qr);
+              // Delay adicional para o callback onQR
+              setTimeout(() => {
+                if (isMountedRef.current && !isRendering) {
+                  safeSetState(setQrCodeData, qr);
+                  safeSetState(setIsLoading, false);
+                  onQRCode(qr);
+                }
+              }, 50);
             }
           },
           () => {
             if (isMountedRef.current && !isRendering) {
-              safeSetState(setQrCodeData, '');
-              safeSetState(setIsConnected, true);
-              safeSetState(setIsLoading, false);
-              onConnectionChange(true);
+              // Delay maior para o callback onReady (onde o erro acontece)
+              setTimeout(() => {
+                if (isMountedRef.current && !isRendering) {
+                  console.log('Executando callback onReady com proteção...');
+                  safeSetState(setQrCodeData, '');
+                  safeSetState(setIsConnected, true);
+                  safeSetState(setIsLoading, false);
+                  onConnectionChange(true);
+                  console.log('Callback onReady executado com sucesso');
+                }
+              }, 150);
             }
           },
           () => {
             if (isMountedRef.current && !isRendering) {
-              safeSetState(setQrCodeData, '');
-              safeSetState(setIsConnected, false);
-              safeSetState(setIsLoading, false);
-              onConnectionChange(false);
+              // Delay para o callback onDisconnected
+              setTimeout(() => {
+                if (isMountedRef.current && !isRendering) {
+                  safeSetState(setQrCodeData, '');
+                  safeSetState(setIsConnected, false);
+                  safeSetState(setIsLoading, false);
+                  onConnectionChange(false);
+                }
+              }, 50);
             }
           },
           undefined,
           (error: string) => {
             if (isMountedRef.current && !isRendering) {
-              safeSetState(setError, error);
-              safeSetState(setIsConnected, false);
-              safeSetState(setIsLoading, false);
+              // Delay para o callback onError
+              setTimeout(() => {
+                if (isMountedRef.current && !isRendering) {
+                  safeSetState(setError, error);
+                  safeSetState(setIsConnected, false);
+                  safeSetState(setIsLoading, false);
+                }
+              }, 50);
             }
           }
         );
