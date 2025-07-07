@@ -295,6 +295,7 @@ function AppContent() {
 
       {showWhatsAppModal && (
         <WhatsAppModal
+          key={`whatsapp-modal-${Date.now()}`}
           isOpen={showWhatsAppModal}
           onClose={() => {
             if (isMountedRef.current) {

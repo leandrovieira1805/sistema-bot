@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { WhatsAppConnection } from '../WhatsApp/WhatsAppConnection';
 
@@ -13,11 +14,18 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
   const [isClosing, setIsClosing] = useState(false);
   const [isProcessingConnection, setIsProcessingConnection] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
   const isMountedRef = useRef(true);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const connectionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Criar container para o portal
+    const container = document.createElement('div');
+    container.id = 'whatsapp-modal-portal';
+    document.body.appendChild(container);
+    setPortalContainer(container);
+
     return () => {
       isMountedRef.current = false;
       if (closeTimeoutRef.current) {
@@ -25,6 +33,10 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
       }
       if (connectionTimeoutRef.current) {
         clearTimeout(connectionTimeoutRef.current);
+      }
+      // Limpar container do portal
+      if (container && document.body.contains(container)) {
+        document.body.removeChild(container);
       }
     };
   }, []);
@@ -61,11 +73,6 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
     }, 1000);
   };
 
-  // Não renderizar nada se estiver fechando ou conectando
-  if (!isOpen || isClosing || isConnecting) {
-    return null;
-  }
-
   const handleQRCode = (qr: string) => {
     safeSetState(setQrCode, qr);
   };
@@ -93,15 +100,21 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
             if (isMountedRef.current) {
               handleClose();
             }
-          }, 2000); // Delay muito maior
+          }, 2000);
         }
         
         safeSetState(setIsProcessingConnection, false);
       }
-    }, 500); // Delay maior para processamento
+    }, 500);
   };
 
-  return (
+  // Não renderizar nada se não estiver aberto ou se estiver fechando/conectando
+  if (!isOpen || isClosing || isConnecting || !portalContainer) {
+    return null;
+  }
+
+  // Conteúdo do modal
+  const modalContent = (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
@@ -139,4 +152,7 @@ export function WhatsAppModal({ isOpen, onClose, onConnectionChange }: WhatsAppM
       </div>
     </div>
   );
+
+  // Renderizar usando portal para isolar completamente do resto da aplicação
+  return createPortal(modalContent, portalContainer);
 }
