@@ -9,15 +9,16 @@ import {
   Store,
   Truck
 } from 'lucide-react';
-import { Order, Category } from '../../types';
+import { Order, Category, StoreConfig } from '../../types';
 
 interface DashboardProps {
   orders: Order[];
   categories: Category[];
+  storeConfig: StoreConfig;
   onTabChange: (tab: string) => void;
 }
 
-export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
+export function Dashboard({ orders, categories, storeConfig, onTabChange }: DashboardProps) {
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const totalProducts = categories.reduce((sum, category) => sum + category.products.length, 0);
   const todayOrders = orders.filter(order => {
@@ -30,7 +31,10 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
   const preparingOrders = orders.filter(order => order.status === 'PREPARING').length;
   const completedOrders = orders.filter(order => order.status === 'COMPLETED').length;
 
-  const businessInfo = { type: 'loja', name: 'Sistema Bot WhatsApp' };
+  const businessInfo = { 
+    type: 'loja', 
+    name: storeConfig?.name || 'Sistema Bot WhatsApp' 
+  };
 
   const stats = [
     {
@@ -190,7 +194,7 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
       {/* Quick Actions */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Ações Rápidas</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-green-500 hover:bg-green-50 transition-colors"
             onClick={() => onTabChange('products')}
@@ -215,6 +219,14 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
           >
             <Users className="mx-auto mb-2 text-gray-400" size={24} />
             <p className="text-sm font-medium text-gray-600">Configurar Bot</p>
+          </button>
+          
+          <button
+            className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-orange-500 hover:bg-orange-50 transition-colors"
+            onClick={() => onTabChange('settings')}
+          >
+            <Store className="mx-auto mb-2 text-gray-400" size={24} />
+            <p className="text-sm font-medium text-gray-600">Configurar Loja</p>
           </button>
         </div>
       </div>

@@ -162,7 +162,7 @@ function App() {
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard orders={orders} categories={categories} onTabChange={setActiveTab} />;
+        return <Dashboard orders={orders} categories={categories} storeConfig={storeConfig} onTabChange={setActiveTab} />;
       
       case 'menu':
         return (
@@ -249,7 +249,7 @@ function App() {
         );
       
       default:
-        return <Dashboard orders={orders} categories={categories} onTabChange={setActiveTab} />;
+        return <Dashboard orders={orders} categories={categories} storeConfig={storeConfig} onTabChange={setActiveTab} />;
     }
   };
 
