@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Layout/Sidebar';
 import { Header } from './components/Layout/Header';
 import { Dashboard } from './components/Dashboard/Dashboard';
@@ -13,8 +13,8 @@ import { AITester } from './components/Dashboard/AITester';
 import { PrintModal } from './components/Modals/PrintModal';
 import { WhatsAppModal } from './components/Modals/WhatsAppModal';
 import { useStore } from './hooks/useStore';
-import { Category, Order, OrderItem } from './types';
-import { initializeWhatsApp, getWhatsAppClient } from './services/whatsappService';
+import { Category, Order } from './types';
+import { initializeWhatsApp } from './services/whatsappService';
 import { whatsappService } from './services/whatsappService';
 
 function App() {
@@ -43,7 +43,6 @@ function App() {
     addOrder,
     updateOrderStatus,
     customerSessions,
-    getOrCreateSession,
     updateSession,
     getAllProducts
   } = useStore();
