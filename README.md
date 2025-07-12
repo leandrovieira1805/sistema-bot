@@ -1,29 +1,24 @@
-# Sistema Bot WhatsApp com Autenticação
+# Sistema Bot WhatsApp
 
-Sistema completo de bot WhatsApp com dashboard administrativo e sistema de autenticação multi-usuário.
+Sistema completo de bot WhatsApp com dashboard administrativo, sem necessidade de autenticação.
 
 ## 🚀 Funcionalidades
 
-### Sistema de Autenticação
-- ✅ Login com usuário e senha
-- ✅ Cada usuário tem suas próprias configurações do bot
-- ✅ Proteção de rotas
-- ✅ Logout seguro
-- ✅ Interface moderna e responsiva
-
 ### Bot WhatsApp
 - ✅ Envio de foto do cardápio quando solicitado
-- ✅ Reconhecimento de pedidos por nome do item
+- ✅ Reconhecimento de pedidos por nome do item usando IA
 - ✅ Busca automática de valores nas configurações
 - ✅ Processamento de pedidos completo
 - ✅ Suporte a PIX e dinheiro
+- ✅ Sistema de IA para entender pedidos com erros de digitação
 
 ### Dashboard Administrativo
 - ✅ Gestão de categorias e produtos
-- ✅ Configurações personalizadas por usuário
+- ✅ Configurações personalizadas da loja
 - ✅ Painel de pedidos em tempo real
 - ✅ Simulador do bot WhatsApp
 - ✅ Gestão de promoções
+- ✅ Interface moderna e responsiva
 
 ## 📋 Pré-requisitos
 
@@ -56,18 +51,11 @@ PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome
 npm start
 ```
 
-## 👤 Usuários Padrão
-
-O sistema vem com um usuário administrador pré-configurado:
-
-- **Usuário:** `admin`
-- **Senha:** `admin123`
-
 ## 📱 Como Usar
 
 ### 1. Acesso ao Dashboard
-- Acesse `http://localhost:3000`
-- Faça login com as credenciais acima
+- Acesse `http://localhost:3002`
+- O sistema carrega automaticamente sem necessidade de login
 - Configure suas configurações personalizadas
 
 ### 2. Configuração do Bot
@@ -76,103 +64,115 @@ O sistema vem com um usuário administrador pré-configurado:
 - Configure nome da loja, mensagens, PIX, etc.
 
 ### 3. Gestão de Produtos
-- Crie categorias (ex: Pizzas, Bebidas)
-- Adicione produtos com nome, preço e imagem
-- Os produtos serão reconhecidos automaticamente pelo bot
+- Vá em "Gestão de Categorias" para criar categorias
+- Clique em uma categoria para adicionar produtos
+- Configure preços, imagens e descrições
 
 ### 4. Conectar WhatsApp
-- Clique no botão "WhatsApp" no header
+- Vá em "Simulador Bot WhatsApp"
+- Clique em "Conectar WhatsApp"
 - Escaneie o QR Code com seu WhatsApp
 - O bot estará pronto para receber pedidos
 
-### 5. Teste o Bot
-- Envie "oi" para o número conectado
-- Digite "1" ou "cardápio" para ver a foto
-- Digite o nome de um produto para fazer pedido
+### 5. Testar o Bot
+- Use o simulador para testar as respostas do bot
+- Envie mensagens como "1" para ver o cardápio
+- Digite nomes de produtos para fazer pedidos
 
-## 🔐 Sistema de Autenticação
+## 🤖 Como o Bot Funciona
 
-### Estrutura de Usuários
-Cada usuário possui:
-- Configurações únicas da loja
-- Produtos e categorias próprios
-- Histórico de pedidos independente
+### Comandos Principais
+- **"1"** - Mostra o cardápio completo
+- **"2"** - Mostra promoções ativas
+- **"cardápio"** - Mostra o cardápio
+- **"promoções"** - Mostra promoções
+- **"carrinho"** - Mostra itens no carrinho
+- **"finalizar pedido"** - Finaliza o pedido
 
-### Adicionar Novos Usuários
-1. Acesse o painel administrativo
-2. Vá em "Gerenciar Usuários" (se implementado)
-3. Crie novos usuários com suas configurações
+### Sistema de IA
+O bot usa inteligência artificial para:
+- Reconhecer produtos mesmo com erros de digitação
+- Sugerir produtos similares
+- Entender variações de nomes
+- Processar quantidades automaticamente
 
-## 🛠️ Tecnologias
+### Fluxo de Pedido
+1. Cliente envia "1" para ver cardápio
+2. Cliente digita nome do produto desejado
+3. Bot confirma produto e quantidade
+4. Cliente confirma adição ao carrinho
+5. Cliente pode adicionar mais itens ou finalizar
+6. Bot solicita dados de entrega e pagamento
+7. Pedido é criado no dashboard
 
-- **Frontend:** React + TypeScript + Tailwind CSS
-- **Backend:** Node.js + Express + Socket.IO
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend:** React + TypeScript + Vite
+- **Backend:** Node.js + Express
 - **WhatsApp:** whatsapp-web.js
-- **Autenticação:** Sistema customizado
-- **Deploy:** Railway (configurado)
+- **IA:** Sistema próprio de matching de produtos
+- **UI:** Tailwind CSS + Lucide React
+- **Real-time:** Socket.IO
 
-## 📦 Deploy no Railway
+## 📁 Estrutura do Projeto
 
-O projeto está configurado para deploy automático no Railway:
+```
+sistema-bot/
+├── src/
+│   ├── components/
+│   │   ├── Bot/           # Componentes do bot
+│   │   ├── Dashboard/     # Componentes do dashboard
+│   │   ├── Layout/        # Header e Sidebar
+│   │   ├── Modals/        # Modais do sistema
+│   │   └── WhatsApp/      # Componentes do WhatsApp
+│   ├── hooks/             # Hooks personalizados
+│   ├── services/          # Serviços (WhatsApp, etc.)
+│   └── types/             # Tipos TypeScript
+├── server-simple.js       # Servidor principal
+└── package.json
+```
 
-1. Conecte seu repositório GitHub ao Railway
-2. O deploy acontece automaticamente
-3. Acesse a URL fornecida pelo Railway
+## 🔧 Configurações
 
-## 🔧 Configurações Avançadas
+### Configurações da Loja
+- **Nome da Loja:** Nome que aparece nas mensagens
+- **Mensagem de Boas-vindas:** Mensagem inicial do bot
+- **Taxa de Entrega:** Valor fixo para entregas
+- **Chave PIX:** Chave PIX para pagamentos
+- **Endereço:** Endereço da loja
+- **Imagem do Cardápio:** URL da imagem do cardápio
 
-### Variáveis de Ambiente
+### Configurações do WhatsApp
+- O bot salva a sessão automaticamente
+- Reconecta automaticamente se desconectar
+- Suporte a múltiplas sessões
+
+## 🚀 Deploy
+
+### Railway
+O projeto está configurado para deploy no Railway:
 ```bash
-PORT=3002                    # Porta do servidor
-PUPPETEER_EXECUTABLE_PATH    # Caminho do Chrome (Railway)
+npm start
 ```
 
-### Estrutura de Arquivos
+### Vercel/Netlify
+Para deploy do frontend:
+```bash
+npm run build
 ```
-src/
-├── components/
-│   ├── Auth/               # Componentes de autenticação
-│   ├── Dashboard/          # Painéis administrativos
-│   ├── Layout/             # Layout da aplicação
-│   └── Modals/             # Modais do sistema
-├── contexts/
-│   └── AuthContext.tsx     # Contexto de autenticação
-├── hooks/
-│   └── useStore.ts         # Hook para gerenciar estado
-├── services/
-│   └── whatsappService.ts  # Serviço do WhatsApp
-└── types/
-    └── index.ts            # Tipos TypeScript
-```
-
-## 🐛 Solução de Problemas
-
-### Bot não conecta
-- Verifique se o QR Code foi escaneado
-- Reinicie o servidor se necessário
-- Verifique os logs no console
-
-### Login não funciona
-- Use as credenciais padrão: `admin` / `admin123`
-- Verifique se o servidor está rodando
-- Limpe o cache do navegador
-
-### Deploy no Railway
-- Verifique os logs do Railway
-- Adicione variáveis de ambiente se necessário
-- Certifique-se de que o `package.json` está correto
 
 ## 📞 Suporte
 
 Para dúvidas ou problemas:
-1. Verifique os logs do console
-2. Consulte a documentação
-3. Abra uma issue no GitHub
+1. Verifique se o Chrome está instalado
+2. Confirme se o WhatsApp está conectado
+3. Verifique os logs do servidor
+4. Teste o QR Code em um ambiente bem iluminado
+
+## 🔄 Atualizações
+
+O sistema é atualizado automaticamente via Socket.IO. Todas as mudanças no dashboard são refletidas em tempo real no bot.
 
 ## 📄 Licença
 
-Este projeto é de uso livre para fins educacionais e comerciais.
-
----
-
-**Desenvolvido com ❤️ para facilitar a gestão de bots WhatsApp** 
+Este projeto é de uso livre para fins comerciais e pessoais. 

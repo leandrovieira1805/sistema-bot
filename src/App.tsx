@@ -12,14 +12,12 @@ import { WhatsAppBot } from './components/Bot/WhatsAppBot';
 import { AITester } from './components/Dashboard/AITester';
 import { PrintModal } from './components/Modals/PrintModal';
 import { WhatsAppModal } from './components/Modals/WhatsAppModal';
-import { AuthProvider } from './contexts/AuthContext';
-import { ProtectedRoute } from './components/Auth/ProtectedRoute';
 import { useStore } from './hooks/useStore';
 import { Category, Order, OrderItem } from './types';
 import { initializeWhatsApp, getWhatsAppClient } from './services/whatsappService';
 import { whatsappService } from './services/whatsappService';
 
-function AppContent() {
+function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [botConnected, setBotConnected] = useState(false);
@@ -306,16 +304,6 @@ function AppContent() {
         />
       )}
     </div>
-  );
-}
-
-function App() {
-  return (
-    <AuthProvider>
-      <ProtectedRoute>
-        <AppContent />
-      </ProtectedRoute>
-    </AuthProvider>
   );
 }
 

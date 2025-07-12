@@ -68,41 +68,14 @@ export interface ChatMessage {
 export interface CustomerSession {
   phone: string;
   cart: OrderItem[];
-  step: 'greeting' | 'menu' | 'ordering' | 'delivery_type' | 'address_street' | 'address_number' | 'address_district' | 'address_city' | 'address_reference' | 'customer_name' | 'payment_method' | 'cash_amount' | 'waiting_pix_proof' | 'completed';
-  messages: ChatMessage[];
   customerData: {
     name?: string;
     address?: string;
-    street?: string;
-    number?: string;
-    district?: string;
-    city?: string;
-    reference?: string;
     deliveryType?: 'delivery' | 'pickup';
     paymentMethod?: 'PIX' | 'CASH' | 'CARD';
     cashAmount?: number;
     change?: number;
-  };
-  suggestions?: string[];
+  } | null;
+  lastActivity: Date;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  password?: string; // Não expor senha no frontend
-  storeConfig: StoreConfig;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface AuthContextType {
-  user: User | null;
-  login: (credentials: LoginCredentials) => Promise<boolean>;
-  logout: () => void;
-  isLoading: boolean;
-}

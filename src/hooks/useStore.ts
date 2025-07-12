@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { StoreConfig, Category, Promotion, Order, CustomerSession, Product } from '../types';
 import { whatsappService } from '../services/whatsappService';
-import { useAuth } from '../contexts/AuthContext';
 
 const defaultStoreConfig: StoreConfig = {
   name: 'Pizzaria Delícia',
@@ -49,95 +48,11 @@ const sampleCategories: Category[] = [
 ];
 
 export function useStore() {
-  const { user } = useAuth();
   const [storeConfig, setStoreConfig] = useState<StoreConfig>(defaultStoreConfig);
   const [categories, setCategories] = useState<Category[]>(sampleCategories);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [customerSessions, setCustomerSessions] = useState<CustomerSession[]>([]);
-
-  // Carregar configurações do usuário logado
-  useEffect(() => {
-    if (user) {
-      console.log('Carregando configurações para usuário:', user.email);
-      
-      // Definir usuário atual no socket
-      const socket = whatsappService.getSocket();
-      if (socket) {
-        socket.emit('set-current-user', user.id);
-      }
-      
-      // Carregar configurações específicas do usuário
-      fetch(`/api/user/${user.id}/config`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then(config => {
-          console.log('Configurações carregadas do servidor:', config);
-          setStoreConfig(config);
-        })
-        .catch(error => {
-          console.error('Erro ao carregar configurações do usuário:', error);
-          // Usar configurações padrão se não conseguir carregar
-          setStoreConfig(defaultStoreConfig);
-        });
-
-      // Carregar categorias do usuário
-      fetch(`/api/user/${user.id}/categories`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then(categoriesData => {
-          console.log('Categorias carregadas do servidor:', categoriesData);
-          setCategories(categoriesData);
-        })
-        .catch(error => {
-          console.error('Erro ao carregar categorias do usuário:', error);
-          // Usar categorias padrão se não conseguir carregar
-          setCategories(sampleCategories);
-        });
-
-      // Carregar promoções do usuário
-      fetch(`/api/user/${user.id}/promotions`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then(promotionsData => {
-          console.log('Promoções carregadas do servidor:', promotionsData);
-          setPromotions(promotionsData);
-        })
-        .catch(error => {
-          console.error('Erro ao carregar promoções do usuário:', error);
-          setPromotions([]);
-        });
-
-      // Carregar pedidos do usuário
-      fetch(`/api/user/${user.id}/orders`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`);
-          }
-          return res.json();
-        })
-        .then(ordersData => {
-          console.log('Pedidos carregados do servidor:', ordersData);
-          setOrders(ordersData);
-        })
-        .catch(error => {
-          console.error('Erro ao carregar pedidos do usuário:', error);
-          setOrders([]);
-        });
-    }
-  }, [user]);
 
   // Sincronizar com o backend
   useEffect(() => {
@@ -158,7 +73,7 @@ export function useStore() {
 
     // Receber novos pedidos
     socket.on('new-order', (order: Order) => {
-      setOrders(prev => [order, ...prev]);
+      setOrders((prev: Order[]) => [order, ...prev]);
     });
 
     return () => {
@@ -185,240 +100,145 @@ export function useStore() {
 
   // Store Config
   const updateStoreConfig = async (config: Partial<StoreConfig>) => {
-    if (!user) return;
-
-    try {
-      const response = await fetch(`/api/user/${user.id}/config`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-      });
-
-      if (response.ok) {
-        const updatedConfig = await response.json();
-        setStoreConfig(updatedConfig);
-        syncWithBackend({ config: updatedConfig });
-      } else {
-        console.error('Erro ao atualizar configurações:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar configurações:', error);
-    }
+    const newConfig = { ...storeConfig, ...config };
+    setStoreConfig(newConfig);
+    syncWithBackend({ config: newConfig });
   };
 
-  // Categories and Products
+  // Categories
   const addCategory = async (name: string) => {
-    if (!user) return;
-
     const newCategory: Category = {
       id: Date.now().toString(),
       name,
       products: []
     };
     
-    setCategories(prev => {
-      const newCategories = [...prev, newCategory];
-      syncWithBackend({ categories: newCategories });
-      return newCategories;
-    });
-
-    // Salvar no backend
-    try {
-      const response = await fetch(`/api/user/${user.id}/categories`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify([...categories, newCategory]),
-      });
-
-      if (!response.ok) {
-        console.error('Erro ao salvar categoria:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Erro ao salvar categoria:', error);
-    }
+    const newCategories = [...categories, newCategory];
+    setCategories(newCategories);
+    syncWithBackend({ categories: newCategories });
   };
 
   const updateCategory = async (id: string, name: string) => {
-    if (!user) return;
-
-    setCategories(prev => {
-      const newCategories = prev.map(cat => 
-        cat.id === id ? { ...cat, name } : cat
-      );
-      syncWithBackend({ categories: newCategories });
-      return newCategories;
-    });
-
-    // Salvar no backend
-    try {
-      const response = await fetch(`/api/user/${user.id}/categories`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(categories.map(cat => 
-          cat.id === id ? { ...cat, name } : cat
-        )),
-      });
-
-      if (!response.ok) {
-        console.error('Erro ao atualizar categoria:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar categoria:', error);
-    }
+    const newCategories = categories.map((cat: Category) => 
+      cat.id === id ? { ...cat, name } : cat
+    );
+    setCategories(newCategories);
+    syncWithBackend({ categories: newCategories });
   };
 
   const deleteCategory = async (id: string) => {
-    if (!user) return;
-
-    setCategories(prev => {
-      const newCategories = prev.filter(cat => cat.id !== id);
-      syncWithBackend({ categories: newCategories });
-      return newCategories;
-    });
-
-    // Salvar no backend
-    try {
-      const response = await fetch(`/api/user/${user.id}/categories`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(categories.filter(cat => cat.id !== id)),
-      });
-
-      if (!response.ok) {
-        console.error('Erro ao deletar categoria:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Erro ao deletar categoria:', error);
-    }
+    const newCategories = categories.filter((cat: Category) => cat.id !== id);
+    setCategories(newCategories);
+    syncWithBackend({ categories: newCategories });
   };
 
+  // Products
   const addProduct = (categoryId: string, product: Omit<Product, 'id'>) => {
     const newProduct: Product = {
       ...product,
-      id: Date.now().toString()
+      id: Date.now().toString(),
+      categoryId
     };
     
-    setCategories(prev => {
-      const newCategories = prev.map(cat => 
+    const newCategories = categories.map((cat: Category) => 
       cat.id === categoryId 
         ? { ...cat, products: [...cat.products, newProduct] }
         : cat
-      );
-      syncWithBackend({ categories: newCategories });
-      return newCategories;
-    });
+    );
+    setCategories(newCategories);
+    syncWithBackend({ categories: newCategories });
   };
 
   const updateProduct = (categoryId: string, productId: string, updates: Partial<Product>) => {
-    setCategories(prev => {
-      const newCategories = prev.map(cat => 
-        cat.id === categoryId 
-          ? { 
-              ...cat, 
-              products: cat.products.map(prod => 
-                prod.id === productId ? { ...prod, ...updates } : prod
-              )
-            }
-          : cat
-      );
-      syncWithBackend({ categories: newCategories });
-      return newCategories;
-    });
+    const newCategories = categories.map((cat: Category) => 
+      cat.id === categoryId 
+        ? { 
+            ...cat, 
+            products: cat.products.map((prod: Product) => 
+              prod.id === productId ? { ...prod, ...updates } : prod
+            )
+          }
+        : cat
+    );
+    setCategories(newCategories);
+    syncWithBackend({ categories: newCategories });
   };
 
   const deleteProduct = (categoryId: string, productId: string) => {
-    setCategories(prev => {
-      const newCategories = prev.map(cat => 
-        cat.id === categoryId 
-          ? { ...cat, products: cat.products.filter(prod => prod.id !== productId) }
-          : cat
-      );
-      syncWithBackend({ categories: newCategories });
-      return newCategories;
-    });
+    const newCategories = categories.map((cat: Category) => 
+      cat.id === categoryId 
+        ? { ...cat, products: cat.products.filter((prod: Product) => prod.id !== productId) }
+        : cat
+    );
+    setCategories(newCategories);
+    syncWithBackend({ categories: newCategories });
   };
 
   // Promotions
   const addPromotion = (promotion: Omit<Promotion, 'id'>) => {
-    const newPromotion: Promotion = {
-      ...promotion,
-      id: Date.now().toString()
-    };
-    setPromotions(prev => [...prev, newPromotion]);
+    const newPromotion: Promotion = { ...promotion, id: Date.now().toString() };
+    const newPromotions = [...promotions, newPromotion];
+    setPromotions(newPromotions);
+    syncWithBackend({ promotions: newPromotions });
   };
 
   const updatePromotion = (id: string, updates: Partial<Promotion>) => {
-    setPromotions(prev => prev.map(promo => 
+    const newPromotions = promotions.map((promo: Promotion) => 
       promo.id === id ? { ...promo, ...updates } : promo
-    ));
+    );
+    setPromotions(newPromotions);
+    syncWithBackend({ promotions: newPromotions });
   };
 
   const deletePromotion = (id: string) => {
-    setPromotions(prev => prev.filter(promo => promo.id !== id));
+    const newPromotions = promotions.filter((promo: Promotion) => promo.id !== id);
+    setPromotions(newPromotions);
+    syncWithBackend({ promotions: newPromotions });
   };
 
   // Orders
   const addOrder = (order: Omit<Order, 'id' | 'createdAt'>) => {
-    const newOrder: Order = {
-      ...order,
-      id: Date.now().toString(),
-      createdAt: new Date()
-    };
-    setOrders(prev => [newOrder, ...prev]);
+    const newOrder: Order = { ...order, id: Date.now().toString(), createdAt: new Date() };
+    const newOrders = [newOrder, ...orders];
+    setOrders(newOrders);
+    syncWithBackend({ orders: newOrders });
   };
 
   const updateOrderStatus = (id: string, status: Order['status']) => {
-    setOrders(prev => prev.map(order => 
+    const newOrders = orders.map((order: Order) => 
       order.id === id ? { ...order, status } : order
-    ));
+    );
+    setOrders(newOrders);
+    syncWithBackend({ orders: newOrders });
   };
 
   // Customer Sessions
   const getOrCreateSession = (phone: string): CustomerSession => {
-    const existing = customerSessions.find(session => session.phone === phone);
-    if (existing) return existing;
-
-    const newSession: CustomerSession = {
+    let session = customerSessions.find((s: CustomerSession) => s.phone === phone);
+    if (!session) {
+      session = {
         phone,
         cart: [],
-        step: 'greeting',
-        messages: [],
-        customerData: {
-            name: undefined,
-            address: undefined,
-            street: undefined,
-            number: undefined,
-            district: undefined,
-            city: undefined,
-            reference: undefined,
-            deliveryType: undefined,
-            paymentMethod: undefined,
-            cashAmount: undefined,
-            change: undefined
-        }
-    };
-
-    setCustomerSessions(prev => [...prev, newSession]);
-    return newSession;
+        customerData: null,
+        lastActivity: new Date()
+      };
+      setCustomerSessions((prev: CustomerSession[]) => [...prev, session!]);
+    }
+    return session;
   };
 
   const updateSession = (phone: string, updates: Partial<CustomerSession>) => {
-    setCustomerSessions(prev => prev.map(session => 
-      session.phone === phone ? { ...session, ...updates } : session
-    ));
+    setCustomerSessions((prev: CustomerSession[]) => 
+      prev.map((session: CustomerSession) => 
+        session.phone === phone 
+          ? { ...session, ...updates, lastActivity: new Date() }
+          : session
+      )
+    );
   };
 
-  // Get all products across categories
   const getAllProducts = () => {
-    return categories.flatMap(cat => cat.products);
+    return categories.flatMap((cat: Category) => cat.products);
   };
 
   return {

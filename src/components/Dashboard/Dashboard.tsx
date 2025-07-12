@@ -10,7 +10,6 @@ import {
   Truck
 } from 'lucide-react';
 import { Order, Category } from '../../types';
-import { useAuth } from '../../contexts/AuthContext';
 
 interface DashboardProps {
   orders: Order[];
@@ -19,7 +18,6 @@ interface DashboardProps {
 }
 
 export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
-  const { user } = useAuth();
   const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const totalProducts = categories.reduce((sum, category) => sum + category.products.length, 0);
   const todayOrders = orders.filter(order => {
@@ -32,22 +30,7 @@ export function Dashboard({ orders, categories, onTabChange }: DashboardProps) {
   const preparingOrders = orders.filter(order => order.status === 'PREPARING').length;
   const completedOrders = orders.filter(order => order.status === 'COMPLETED').length;
 
-  // Determinar tipo de negócio baseado no usuário
-  const getBusinessType = () => {
-    if (!user) return { type: 'loja', name: 'Loja' };
-    
-    const email = user.email?.toLowerCase() || '';
-    
-    if (email === 'admin@exemplo.com') {
-      return { type: 'pizzaria', name: 'Pizzaria Delícia' };
-    } else if (email === 'evellynlavinian@gmail.com') {
-      return { type: 'distribuidora', name: 'Bebidas Delícia' };
-    }
-    
-    return { type: 'loja', name: 'Minha Loja' };
-  };
-
-  const businessInfo = getBusinessType();
+  const businessInfo = { type: 'loja', name: 'Sistema Bot WhatsApp' };
 
   const stats = [
     {
