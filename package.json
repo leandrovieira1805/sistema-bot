@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "server": "node server.js",
     "server:fixed": "node server-fixed.js",
-    "start": "npm run build && node server-basic.cjs",
+    "start": "npm run build && node server.js",
     "start:dev": "concurrently \"npm run server\" \"npm run dev\"",
     "start:all": "start-all.bat",
     "dev:full": "concurrently \"npm run server\" \"npm run dev\"",
