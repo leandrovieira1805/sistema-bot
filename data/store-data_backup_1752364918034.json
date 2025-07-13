@@ -1,0 +1,45 @@
+{
+  "config": {
+    "name": "Pizzaria Delícia",
+    "greeting": "Olá! Seja bem-vindo à Pizzaria Delícia\n",
+    "deliveryFee": 5,
+    "pixKey": "contato@pizzariadelicia.com.br",
+    "address": "Rua das Pizzas, 123 - Centro - Cidade Exemplo",
+    "menuImage": "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800",
+    "menuImages": []
+  },
+  "categories": [
+    {
+      "id": "1",
+      "name": "Pizzas",
+      "products": [
+        {
+          "id": "1",
+          "name": "Pizza de Calabresa",
+          "price": 45.5,
+          "image": "https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=400",
+          "categoryId": "1"
+        }
+      ]
+    },
+    {
+      "id": "1752362432831",
+      "name": "BEBICA",
+      "products": [
+        {
+          "name": "COCA COLA",
+          "price": 25,
+          "image": "",
+          "unit": "unit",
+          "unitLabel": "unidade",
+          "packSize": 1,
+          "packPrice": 0,
+          "unitPrice": 0,
+          "categoryId": "1752362432831",
+          "id": "1752362448409"
+        }
+      ]
+    }
+  ],
+  "promotions": []
+}
