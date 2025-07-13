@@ -711,6 +711,70 @@ async function processCustomerMessage(message, contactName) {
   };
 }
 
+// Função para transcrever áudio
+async function transcribeAudio(audioPath) {
+  try {
+    console.log('🎵 Iniciando transcrição do áudio:', audioPath);
+    
+    // Opção 1: Usar API gratuita (Whisper API ou similar)
+    // Por enquanto, vamos simular uma transcrição
+    // Você pode integrar com: OpenAI Whisper, Google Speech-to-Text, etc.
+    
+    // Simulação de transcrição (para teste)
+    const possibleTranscripts = [
+      "quero uma pizza de calabresa",
+      "qual o preço da coca cola",
+      "fazer um pedido",
+      "quero ver o cardápio",
+      "qual o endereço da loja",
+      "aceitam cartão de crédito",
+      "quero delivery",
+      "qual o tempo de entrega"
+    ];
+    
+    // Simular processamento
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Retornar uma transcrição aleatória para teste
+    const randomTranscript = possibleTranscripts[Math.floor(Math.random() * possibleTranscripts.length)];
+    
+    console.log('📝 Transcrição simulada:', randomTranscript);
+    return randomTranscript;
+    
+    // Para implementar transcrição real, você pode usar:
+    // 1. OpenAI Whisper API
+    // 2. Google Speech-to-Text
+    // 3. Azure Speech Services
+    // 4. Amazon Transcribe
+    
+    // Exemplo com OpenAI Whisper (requer API key):
+    /*
+    const FormData = require('form-data');
+    const fs = require('fs');
+    
+    const form = new FormData();
+    form.append('file', fs.createReadStream(audioPath));
+    form.append('model', 'whisper-1');
+    
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        ...form.getHeaders()
+      },
+      body: form
+    });
+    
+    const result = await response.json();
+    return result.text;
+    */
+    
+  } catch (error) {
+    console.error('❌ Erro na transcrição:', error);
+    return null;
+  }
+}
+
 // Função para limpar sessão do WhatsApp
 async function clearWhatsAppSession() {
   try {
@@ -950,6 +1014,7 @@ io.on('connection', (socket) => {
 
       whatsappClient.on('message', async (message) => {
         console.log('=== [EVENTO] MENSAGEM RECEBIDA (message) ===');
+        console.log('Tipo de mensagem:', message.type);
         console.log('Mensagem recebida:', message.body);
         console.log('Remetente:', message.from);
         
@@ -963,11 +1028,72 @@ io.on('connection', (socket) => {
           console.log('Não foi possível obter info do cliente para comparar número.');
         }
 
+        // Verificar se é uma mensagem de áudio
+        if (message.type === 'ptt' || message.type === 'audio') {
+          console.log('🎵 Mensagem de áudio detectada!');
+          
+          try {
+            // Baixar o áudio
+            const media = await message.downloadMedia();
+            if (media && media.data) {
+              console.log('✅ Áudio baixado com sucesso');
+              
+              // Salvar o áudio temporariamente
+              const audioBuffer = Buffer.from(media.data, 'base64');
+              const audioPath = path.join(__dirname, 'uploads', `audio_${Date.now()}.ogg`);
+              fs.writeFileSync(audioPath, audioBuffer);
+              
+              // Enviar mensagem informando que está processando
+              await message.reply('🎵 Processando seu áudio...');
+              
+              // Aqui você pode integrar com uma API de transcrição
+              // Por enquanto, vamos simular uma transcrição
+              const transcribedText = await transcribeAudio(audioPath);
+              
+              // Limpar arquivo temporário
+              try {
+                fs.unlinkSync(audioPath);
+              } catch (e) {
+                console.log('Erro ao deletar arquivo temporário:', e.message);
+              }
+              
+              if (transcribedText) {
+                console.log('📝 Texto transcrito:', transcribedText);
+                
+                // Criar uma mensagem simulada com o texto transcrito
+                const audioMessage = {
+                  ...message,
+                  body: transcribedText,
+                  type: 'text',
+                  isTranscribedAudio: true
+                };
+                
+                // Processar a mensagem transcrita
+                const result = await processCustomerMessage(audioMessage, contactName);
+                
+                if (result.response) {
+                  await message.reply(result.response);
+                  console.log('Resposta enviada para áudio transcrito!');
+                }
+              } else {
+                await message.reply('Desculpe, não consegui entender o áudio. Pode enviar por texto?');
+              }
+            } else {
+              await message.reply('Desculpe, não consegui processar o áudio. Pode enviar por texto?');
+            }
+          } catch (audioError) {
+            console.error('❌ Erro ao processar áudio:', audioError);
+            await message.reply('Desculpe, ocorreu um erro ao processar o áudio. Pode enviar por texto?');
+          }
+          return; // Não processar como mensagem de texto
+        }
+
         // Emitir mensagem recebida para o frontend
         socket.emit('message-received', {
           from: message.from,
           body: message.body,
-          timestamp: message.timestamp
+          timestamp: message.timestamp,
+          type: message.type
         });
 
         // Obter nome do contato
