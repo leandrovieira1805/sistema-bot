@@ -248,18 +248,57 @@ export class AIService {
     const product = this.findProduct(message);
     
     if (product) {
-      // Adicionar produto ao carrinho
-      const existingItem = session.cart?.find(item => item.product.id === product.id);
-      if (existingItem) {
-        existingItem.quantity += 1;
+      // === MELHORADO: detectar quantidade e tipo de embalagem ===
+      let quantity = 1;
+      let packType = null; // 'fardo', 'unidade', etc.
+      const numberWords = {
+        'um': 1, 'uma': 1, 'dois': 2, 'duas': 2, 'três': 3, 'tres': 3, 'quatro': 4, 'cinco': 5, 'seis': 6, 'sete': 7, 'oito': 8, 'nove': 9, 'dez': 10
+      };
+      const packWords = ['fardo', 'fardos', 'unidade', 'unidades', 'caixa', 'caixas', 'pacote', 'pacotes'];
+      // Regex: número + tipo + (de)? + nome do produto (ex: 2 fardos de coca cola)
+      const regexFull = new RegExp(`(\d+|um|uma|dois|duas|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez)\s*(${packWords.join('|')})?\s*(de\s+)?${product.name.toLowerCase()}`);
+      const matchFull = lowerMessage.match(regexFull);
+      if (matchFull) {
+        const val = matchFull[1];
+        packType = matchFull[2] ? matchFull[2].replace(/s$/, '') : null; // singular
+        if (/^\d+$/.test(val)) {
+          quantity = parseInt(val);
+        } else if (numberWords[val.replace('ê','e')]) {
+          quantity = numberWords[val.replace('ê','e')];
+        }
       } else {
-        if (!session.cart) session.cart = [];
+        // fallback: número + nome do produto (ex: 2 coca cola)
+        const regexSimple = new RegExp(`(\d+|um|uma|dois|duas|tr[eê]s|quatro|cinco|seis|sete|oito|nove|dez)\s+${product.name.toLowerCase()}`);
+        const matchSimple = lowerMessage.match(regexSimple);
+        if (matchSimple) {
+          const val = matchSimple[1];
+          if (/^\d+$/.test(val)) {
+            quantity = parseInt(val);
+          } else if (numberWords[val.replace('ê','e')]) {
+            quantity = numberWords[val.replace('ê','e')];
+          }
+        }
+      }
+      // Se pediu fardo/caixa/pacote e produto tem packSize, multiplica
+      if (packType && ['fardo','caixa','pacote'].includes(packType)) {
+        // Se packSize não for definido ou menor que 1, assume 1
+        const realPackSize = (typeof product.packSize === 'number' && product.packSize > 0) ? product.packSize : 1;
+        quantity = quantity * realPackSize;
+      }
+      // === FIM MELHORADO ===
+      // Adicionar produto ao carrinho (corrigido: nunca criar item 'fardo coca cola')
+      if (!session.cart) session.cart = [];
+      const existingItem = session.cart.find(item => item.product.id === product.id);
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
         session.cart.push({
           product,
-          quantity: 1
+          quantity: quantity
         });
       }
-      
+      // Remover do carrinho qualquer item que tenha nome diferente do produto base (ex: 'fardo coca cola')
+      session.cart = session.cart.filter(item => item.product.id === product.id);
       return {
         response: this.generateProductAddedResponse(product, session, context),
         nextStep: 'ordering'
@@ -272,13 +311,28 @@ export class AIService {
     };
   }
 
-  // Encontrar produto por nome
+  // Encontrar produto por nome (agora aceita nomes parciais)
   findProduct(message) {
     const lowerMessage = message.toLowerCase();
-    return this.products.find(product => 
-      product.name.toLowerCase().includes(lowerMessage) ||
+    // Busca exata
+    let found = this.products.find(product => 
+      product.name.toLowerCase() === lowerMessage
+    );
+    if (found) return found;
+    // Busca por inclusão (nome completo)
+    found = this.products.find(product => 
       lowerMessage.includes(product.name.toLowerCase())
-    ) || null;
+    );
+    if (found) return found;
+    // Busca por palavra-chave (parcial)
+    const msgWords = lowerMessage.split(/\s+/);
+    for (const product of this.products) {
+      const prodWords = product.name.toLowerCase().split(/\s+/);
+      if (prodWords.some(word => msgWords.includes(word))) {
+        return product;
+      }
+    }
+    return null;
   }
 
   // Gerar resposta de produto adicionado

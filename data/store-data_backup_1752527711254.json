@@ -4,8 +4,9 @@
     "greeting": "Olá! Seja bem-vindo à Pizzaria Delícia\n",
     "deliveryFee": 5,
     "pixKey": "contato@pizzariadelicia.com.br",
+    "pixKeyHolder": "João Silva",
     "address": "Rua das Pizzas, 123 - Centro - Cidade Exemplo",
-    "menuImage": "",
+    "menuImage": "/uploads/1752526653267_1949a4ff-29fa-4fb0-b1a5-47aa44c8fb46.jpeg",
     "menuImages": []
   },
   "categories": [

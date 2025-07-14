@@ -4,8 +4,9 @@
     "greeting": "Olá! Seja bem-vindo à Pizzaria Delícia\n",
     "deliveryFee": 5,
     "pixKey": "contato@pizzariadelicia.com.br",
+    "pixKeyHolder": "João Silva",
     "address": "Rua das Pizzas, 123 - Centro - Cidade Exemplo",
-    "menuImage": "/uploads/1752453614486_98a30186-6ff0-4d64-a344-2c234b60335d.jpeg",
+    "menuImage": "/uploads/1752526653267_1949a4ff-29fa-4fb0-b1a5-47aa44c8fb46.jpeg",
     "menuImages": []
   },
   "categories": [
@@ -30,11 +31,11 @@
           "name": "COCA COLA",
           "price": 25,
           "image": "",
-          "unit": "unit",
-          "unitLabel": "unidade",
-          "packSize": 1,
+          "unit": "pack",
+          "unitLabel": "fardo",
+          "packSize": 12,
           "packPrice": 0,
-          "unitPrice": 0,
+          "unitPrice": 25,
           "categoryId": "1752362432831",
           "id": "1752362448409"
         }
