@@ -65,64 +65,10 @@ export function WhatsAppBot({
       console.log('Nova sessão criada:', newSession);
       onUpdateSession(phone, newSession);
       
-      // Aguardar um pouco para a sessão ser atualizada e então enviar mensagens iniciais
+      // Aguardar um pouco para a sessão ser atualizada e então selecionar a sessão
       setTimeout(() => {
         setSelectedSession(phone);
-        // 1. Mensagem de boas-vindas (saudação cadastrada no site)
-        const initialMessage: ChatMessage = {
-          id: Date.now().toString(),
-          type: 'bot',
-          content: storeConfig.greeting,
-          timestamp: new Date()
-        };
-        const updatedMessages = [initialMessage];
-        onUpdateSession(phone, { messages: updatedMessages });
-        console.log('✅ Mensagem de saudação enviada');
-        
-        // 2. Enviar cardápio automaticamente
-        if (storeConfig.menuImage && storeConfig.menuImage.trim() !== '') {
-          setTimeout(() => {
-            const menuImageMessage: ChatMessage = {
-              id: (Date.now() + 1).toString(),
-              type: 'bot',
-              content: 'Aqui está nosso cardápio! 🍕',
-              image: storeConfig.menuImage,
-              timestamp: new Date()
-            };
-            const sessionAtual = sessions.find(s => s.phone === phone);
-            const msgs = sessionAtual && sessionAtual.messages ? sessionAtual.messages : updatedMessages;
-            onUpdateSession(phone, { messages: [...msgs, menuImageMessage] });
-            console.log('✅ Cardápio enviado automaticamente');
-            
-            // 3. Frase aguardando pedido
-            setTimeout(() => {
-              const aguardandoPedidoMessage: ChatMessage = {
-                id: (Date.now() + 2).toString(),
-                type: 'bot',
-                content: 'Digite o nome do produto e a quantidade desejada.',
-                timestamp: new Date()
-              };
-              const sessionAtual2 = sessions.find(s => s.phone === phone);
-              const msgs2 = sessionAtual2 && sessionAtual2.messages ? sessionAtual2.messages : [...msgs, menuImageMessage];
-              onUpdateSession(phone, { messages: [...msgs2, aguardandoPedidoMessage] });
-              console.log('✅ Mensagem aguardando pedido enviada');
-            }, 300);
-          }, 500);
-        } else {
-          // Se não há imagem, enviar apenas a mensagem de aguardando pedido
-          setTimeout(() => {
-            const aguardandoPedidoMessage: ChatMessage = {
-              id: (Date.now() + 1).toString(),
-              type: 'bot',
-              content: 'Digite o nome do produto e a quantidade desejada.',
-              timestamp: new Date()
-            };
-            const sessionAtual = sessions.find(s => s.phone === phone);
-            const msgs = sessionAtual && sessionAtual.messages ? sessionAtual.messages : updatedMessages;
-            onUpdateSession(phone, { messages: [...msgs, aguardandoPedidoMessage] });
-            console.log('✅ Mensagem aguardando pedido enviada (sem imagem)');
-          }, 500);
-        }
+        // Removido: envio automático de mensagem de saudação e cardápio
       }, 100);
     } else {
       console.log('✅ Usando sessão existente');
