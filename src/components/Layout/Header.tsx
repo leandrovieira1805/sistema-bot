@@ -7,13 +7,18 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onOpenWhatsAppSettings }) => {
-  const { isSaving, lastSaveStatus } = useStore();
+  const { isSaving, lastSaveStatus, storeConfig } = useStore();
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-900">Painel Administrativo</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {storeConfig?.name || 'Sistema Bot WhatsApp'}
+            </h1>
+            <p className="text-sm text-gray-600">Painel Administrativo</p>
+          </div>
         
           {/* Indicador de status de salvamento */}
           <div className="flex items-center space-x-2">

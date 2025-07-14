@@ -105,14 +105,17 @@ export function Dashboard({ orders, categories, storeConfig, onTabChange, onOpen
           ) : businessInfo.type === 'distribuidora' ? (
             <Truck className="text-blue-500" size={32} />
           ) : (
-            <Store className="text-gray-500" size={32} />
+            <Store className="text-green-500" size={32} />
           )}
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{businessInfo.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-800">{businessInfo.name}</h1>
             <p className="text-gray-600">
               {businessInfo.type === 'pizzaria' && 'Sistema de pedidos para pizzaria'}
               {businessInfo.type === 'distribuidora' && 'Sistema de vendas para distribuidora de bebidas'}
               {businessInfo.type === 'loja' && 'Sistema de pedidos personalizado'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Bem-vindo ao seu painel de controle! 🎉
             </p>
           </div>
         </div>

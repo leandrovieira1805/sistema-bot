@@ -61,6 +61,13 @@ function App() {
     };
   }, []);
 
+  // Atualizar título da página com o nome da loja
+  useEffect(() => {
+    const pageTitle = getPageTitle();
+    const storeName = storeConfig?.name || 'Sistema Bot WhatsApp';
+    document.title = `${pageTitle} - ${storeName}`;
+  }, [activeTab, storeConfig?.name, selectedCategory]);
+
   const handleUpdateMenuImage = (imageUrl: string) => {
     updateStoreConfig({ menuImage: imageUrl });
   };

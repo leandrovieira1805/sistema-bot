@@ -8,6 +8,7 @@ import {
   Brain,
   Settings 
 } from 'lucide-react';
+import { useStore } from '../../hooks/useStore';
 
 interface SidebarProps {
   activeTab: string;
@@ -27,13 +28,16 @@ const menuItems = [
 ];
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  const { storeConfig } = useStore();
+
   return (
     <div className="w-64 bg-white shadow-lg h-screen fixed left-0 top-0 z-40">
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-bold text-gray-800 flex items-center gap-2">
           <MessageSquare className="text-green-600" size={24} />
-          OrderBot Pro
+          {storeConfig?.name || 'Sistema Bot'}
         </h1>
+        <p className="text-xs text-gray-500 mt-1">Painel de Controle</p>
       </div>
       
       <nav className="mt-6">
