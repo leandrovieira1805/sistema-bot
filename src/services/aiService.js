@@ -135,21 +135,17 @@ export class AIService {
     // Usar a mensagem de saudação configurada nas configurações da loja
     if (this.storeConfig.greeting) {
       const nameGreeting = customerName ? `, ${customerName}` : '';
-      const personalizedGreeting = this.storeConfig.greeting.replace(
-        /Olá!|Oi!|Bem-vindo/gi, 
-        (match) => {
-          const timeGreetings = {
-            morning: 'Bom dia',
-            afternoon: 'Boa tarde', 
-            evening: 'Boa noite',
-            night: 'Boa noite'
-          };
-          const greeting = timeGreetings[context.timeOfDay] || 'Olá';
-          return `${greeting}${nameGreeting}!`;
-        }
-      );
-      
-      return personalizedGreeting;
+      // Extrair apenas o nome da loja do greeting salvo
+      const storeName = this.storeConfig.name;
+      const timeGreetings = {
+        morning: 'Bom dia',
+        afternoon: 'Boa tarde',
+        evening: 'Boa noite',
+        night: 'Boa noite'
+      };
+      const greeting = timeGreetings[context.timeOfDay] || 'Olá';
+      // Montar saudação personalizada sem duplicar
+      return `${greeting}${nameGreeting}! Seja bem-vindo(a) à ${storeName}`;
     }
     
     // Fallback para mensagem padrão se não houver configuração
