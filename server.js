@@ -732,59 +732,81 @@ async function transcribeAudio(audioPath) {
       return await transcribeAudioFallback();
     }
     
-    // Simulação de transcrição (para teste)
-    const possibleTranscripts = [
-      "quero uma pizza de calabresa",
-      "qual o preço da coca cola",
-      "fazer um pedido",
-      "quero ver o cardápio",
-      "qual o endereço da loja",
-      "aceitam cartão de crédito",
-      "quero delivery",
-      "qual o tempo de entrega"
-    ];
+    // Verificar se a API key está configurada
+    const openaiApiKey = process.env.OPENAI_API_KEY;
+    if (!openaiApiKey) {
+      console.log('⚠️ OpenAI API key não configurada, usando simulação');
+      return await transcribeAudioSimulation();
+    }
     
-    // Simular processamento com timeout
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Retornar uma transcrição aleatória para teste
-    const randomTranscript = possibleTranscripts[Math.floor(Math.random() * possibleTranscripts.length)];
-    
-    console.log('📝 Transcrição simulada:', randomTranscript);
-    return randomTranscript;
-    
-    // Para implementar transcrição real, você pode usar:
-    // 1. OpenAI Whisper API
-    // 2. Google Speech-to-Text
-    // 3. Azure Speech Services
-    // 4. Amazon Transcribe
-    
-    // Exemplo com OpenAI Whisper (requer API key):
-    /*
-    const FormData = require('form-data');
-    const fs = require('fs');
-    
-    const form = new FormData();
-    form.append('file', fs.createReadStream(audioPath));
-    form.append('model', 'whisper-1');
-    
-    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-        ...form.getHeaders()
-      },
-      body: form
-    });
-    
-    const result = await response.json();
-    return result.text;
-    */
+    // Implementação real com OpenAI Whisper
+    try {
+      const FormData = require('form-data');
+      
+      const form = new FormData();
+      form.append('file', fs.createReadStream(audioPath));
+      form.append('model', 'whisper-1');
+      form.append('language', 'pt'); // Português
+      form.append('response_format', 'text');
+      
+      console.log('🔄 Enviando áudio para OpenAI Whisper...');
+      
+      const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          ...form.getHeaders()
+        },
+        body: form
+      });
+      
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.text();
+      console.log('✅ Transcrição real obtida:', result);
+      
+      return result.trim();
+      
+    } catch (apiError) {
+      console.log('⚠️ Erro na API OpenAI, usando simulação:', apiError.message);
+      return await transcribeAudioSimulation();
+    }
     
   } catch (error) {
     console.log('⚠️ Erro na transcrição principal, usando fallback');
     return await transcribeAudioFallback();
   }
+}
+
+// Função de simulação para quando não há API key
+async function transcribeAudioSimulation() {
+  console.log('🎭 Usando simulação de transcrição...');
+  
+  const possibleTranscripts = [
+    "quero uma pizza de calabresa",
+    "qual o preço da coca cola",
+    "fazer um pedido",
+    "quero ver o cardápio",
+    "qual o endereço da loja",
+    "aceitam cartão de crédito",
+    "quero delivery",
+    "qual o tempo de entrega",
+    "quero duas pizzas de calabresa",
+    "tem promoção hoje",
+    "qual o valor da entrega",
+    "quero retirar no local"
+  ];
+  
+  // Simular processamento com timeout
+  await new Promise(resolve => setTimeout(resolve, 1500));
+  
+  // Retornar uma transcrição aleatória para teste
+  const randomTranscript = possibleTranscripts[Math.floor(Math.random() * possibleTranscripts.length)];
+  
+  console.log('📝 Transcrição simulada:', randomTranscript);
+  return randomTranscript;
 }
 
 // Função de fallback para transcrição
