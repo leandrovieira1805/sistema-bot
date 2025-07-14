@@ -37,12 +37,22 @@ export function WhatsAppBot({
   }, [selectedSession, sessions]);
 
   const createNewSession = () => {
-    if (!simulatedPhone.trim()) return;
+    console.log('=== CRIANDO NOVA SESSÃO ===');
+    console.log('Número digitado:', simulatedPhone);
+    
+    if (!simulatedPhone.trim()) {
+      console.log('❌ Número vazio, não criando sessão');
+      return;
+    }
     
     const phone = simulatedPhone.trim();
+    console.log('Número formatado:', phone);
+    
     const existingSession = sessions.find(s => s.phone === phone);
+    console.log('Sessão existente:', existingSession);
     
     if (!existingSession) {
+      console.log('✅ Criando nova sessão...');
       const newSession: CustomerSession = {
         phone,
         cart: [],
@@ -52,18 +62,95 @@ export function WhatsAppBot({
         lastActivity: new Date()
       };
       
+      console.log('Nova sessão criada:', newSession);
       onUpdateSession(phone, newSession);
+      
+      // Aguardar um pouco para a sessão ser atualizada e então enviar mensagens iniciais
+      setTimeout(() => {
+        setSelectedSession(phone);
+        // 1. Mensagem de boas-vindas (saudação cadastrada no site)
+        const initialMessage: ChatMessage = {
+          id: Date.now().toString(),
+          type: 'bot',
+          content: storeConfig.greeting,
+          timestamp: new Date()
+        };
+        const updatedMessages = [initialMessage];
+        onUpdateSession(phone, { messages: updatedMessages });
+        console.log('✅ Mensagem de saudação enviada');
+        
+        // 2. Enviar cardápio automaticamente
+        if (storeConfig.menuImage && storeConfig.menuImage.trim() !== '') {
+          setTimeout(() => {
+            const menuImageMessage: ChatMessage = {
+              id: (Date.now() + 1).toString(),
+              type: 'bot',
+              content: 'Aqui está nosso cardápio! 🍕',
+              image: storeConfig.menuImage,
+              timestamp: new Date()
+            };
+            const sessionAtual = sessions.find(s => s.phone === phone);
+            const msgs = sessionAtual && sessionAtual.messages ? sessionAtual.messages : updatedMessages;
+            onUpdateSession(phone, { messages: [...msgs, menuImageMessage] });
+            console.log('✅ Cardápio enviado automaticamente');
+            
+            // 3. Frase aguardando pedido
+            setTimeout(() => {
+              const aguardandoPedidoMessage: ChatMessage = {
+                id: (Date.now() + 2).toString(),
+                type: 'bot',
+                content: 'Digite o nome do produto e a quantidade desejada.',
+                timestamp: new Date()
+              };
+              const sessionAtual2 = sessions.find(s => s.phone === phone);
+              const msgs2 = sessionAtual2 && sessionAtual2.messages ? sessionAtual2.messages : [...msgs, menuImageMessage];
+              onUpdateSession(phone, { messages: [...msgs2, aguardandoPedidoMessage] });
+              console.log('✅ Mensagem aguardando pedido enviada');
+            }, 300);
+          }, 500);
+        } else {
+          // Se não há imagem, enviar apenas a mensagem de aguardando pedido
+          setTimeout(() => {
+            const aguardandoPedidoMessage: ChatMessage = {
+              id: (Date.now() + 1).toString(),
+              type: 'bot',
+              content: 'Digite o nome do produto e a quantidade desejada.',
+              timestamp: new Date()
+            };
+            const sessionAtual = sessions.find(s => s.phone === phone);
+            const msgs = sessionAtual && sessionAtual.messages ? sessionAtual.messages : updatedMessages;
+            onUpdateSession(phone, { messages: [...msgs, aguardandoPedidoMessage] });
+            console.log('✅ Mensagem aguardando pedido enviada (sem imagem)');
+          }, 500);
+        }
+      }, 100);
+    } else {
+      console.log('✅ Usando sessão existente');
+      setSelectedSession(phone);
     }
     
-    setSelectedSession(phone);
     setSimulatedPhone('');
+    console.log('=== SESSÃO CRIADA/SELECIONADA ===');
   };
 
   const sendMessage = (content: string, type: 'customer' | 'bot' = 'customer') => {
-    if (!selectedSession) return;
+    console.log('=== ENVIANDO MENSAGEM ===');
+    console.log('Sessão selecionada:', selectedSession);
+    console.log('Conteúdo:', content);
+    console.log('Tipo:', type);
+    
+    if (!selectedSession) {
+      console.log('❌ Nenhuma sessão selecionada');
+      return;
+    }
 
     const session = sessions.find(s => s.phone === selectedSession);
-    if (!session) return;
+    if (!session) {
+      console.log('❌ Sessão não encontrada');
+      return;
+    }
+
+    console.log('Sessão encontrada:', session);
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -72,10 +159,16 @@ export function WhatsAppBot({
       timestamp: new Date()
     };
 
+    console.log('Nova mensagem criada:', newMessage);
+
     const updatedMessages = [...(session.messages || []), newMessage];
+    console.log('Mensagens atualizadas:', updatedMessages);
+    
     onUpdateSession(selectedSession, { messages: updatedMessages });
+    console.log('✅ Mensagem adicionada à sessão');
 
     if (type === 'customer') {
+      console.log('🔄 Processando resposta do bot...');
       // Process customer message and generate bot response
       setTimeout(() => {
         processCustomerMessage(session, content);
@@ -84,10 +177,23 @@ export function WhatsAppBot({
   };
 
   const sendBotMessage = (content: string, image?: string) => {
-    if (!selectedSession) return;
+    console.log('=== ENVIANDO MENSAGEM DO BOT ===');
+    console.log('Sessão selecionada:', selectedSession);
+    console.log('Conteúdo:', content);
+    console.log('Imagem:', image);
+    
+    if (!selectedSession) {
+      console.log('❌ Nenhuma sessão selecionada para enviar mensagem do bot');
+      return;
+    }
 
     const session = sessions.find(s => s.phone === selectedSession);
-    if (!session) return;
+    if (!session) {
+      console.log('❌ Sessão não encontrada para enviar mensagem do bot');
+      return;
+    }
+
+    console.log('Sessão encontrada para bot:', session);
 
     const newMessage: ChatMessage = {
       id: Date.now().toString(),
@@ -97,16 +203,27 @@ export function WhatsAppBot({
       timestamp: new Date()
     };
 
+    console.log('Nova mensagem do bot criada:', newMessage);
+
     const updatedMessages = [...(session.messages || []), newMessage];
+    console.log('Mensagens atualizadas com bot:', updatedMessages);
+    
     onUpdateSession(selectedSession, { messages: updatedMessages });
+    console.log('✅ Mensagem do bot adicionada à sessão');
   };
 
   const processCustomerMessage = (session: CustomerSession, message: string) => {
+    console.log('=== PROCESSANDO MENSAGEM DO CLIENTE ===');
+    console.log('Sessão:', session);
+    console.log('Mensagem:', message);
+    
     // Usar o serviço de IA para processar a mensagem
     const aiResponse = aiService.processMessage(session, message);
+    console.log('Resposta da IA:', aiResponse);
     
     // Enviar resposta do bot
     sendBotMessage(aiResponse.response, aiResponse.shouldSendImage);
+    console.log('✅ Resposta do bot enviada');
     
     // Atualizar sessão com próximo passo e dados do carrinho
     const updates: Partial<CustomerSession> = { 
@@ -114,28 +231,42 @@ export function WhatsAppBot({
       lastActivity: new Date()
     };
     
-    // Se a IA processou um produto, atualizar o carrinho
-    if (aiResponse.nextStep === 'ordering' && message.toLowerCase().includes('finalizar') === false) {
-    const product = products.find(p => 
+    console.log('Atualizações da sessão:', updates);
+    
+    // Se a IA retornou atualização do carrinho (remoção), usar ela
+    if (aiResponse.cartUpdate) {
+      console.log('🛒 Atualizando carrinho (remoção):', aiResponse.cartUpdate);
+      updates.cart = aiResponse.cartUpdate;
+    }
+    // Se a IA processou um produto (adição), atualizar o carrinho
+    else if (aiResponse.nextStep === 'ordering' && message.toLowerCase().includes('finalizar') === false) {
+      console.log('🛒 Processando produto...');
+      const product = products.find(p => 
         p.name.toLowerCase().includes(message.toLowerCase()) ||
         message.toLowerCase().includes(p.name.toLowerCase())
-    );
+      );
 
-    if (product) {
-      const existingItem = session.cart.find(item => item.product.id === product.id);
-      let updatedCart;
+      if (product) {
+        console.log('Produto encontrado:', product);
+        const existingItem = session.cart.find(item => item.product.id === product.id);
+        let updatedCart;
 
-      if (existingItem) {
-        updatedCart = session.cart.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      } else {
-        updatedCart = [...session.cart, { product, quantity: 1 }];
-      }
+        if (existingItem) {
+          console.log('Produto já no carrinho, incrementando quantidade');
+          updatedCart = session.cart.map(item =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        } else {
+          console.log('Adicionando novo produto ao carrinho');
+          updatedCart = [...session.cart, { product, quantity: 1 }];
+        }
 
         updates.cart = updatedCart;
+        console.log('Carrinho atualizado:', updatedCart);
+      } else {
+        console.log('❌ Produto não encontrado');
       }
     }
     
@@ -231,9 +362,18 @@ export function WhatsAppBot({
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('=== HANDLE SEND MESSAGE ===');
+    console.log('Mensagem:', newMessage);
+    console.log('Sessão selecionada:', selectedSession);
+    
     if (newMessage.trim() && selectedSession) {
+      console.log('✅ Enviando mensagem...');
       sendMessage(newMessage.trim());
       setNewMessage('');
+    } else {
+      console.log('❌ Não foi possível enviar mensagem');
+      console.log('Mensagem vazia?', !newMessage.trim());
+      console.log('Sessão selecionada?', !!selectedSession);
     }
   };
 
@@ -247,13 +387,16 @@ export function WhatsAppBot({
           <p className="text-green-100 text-sm">
             Simule conversas para testar o fluxo de pedidos com IA
           </p>
+          <div className="mt-2 text-xs text-green-200">
+            💡 <strong>Como usar:</strong> Digite um número, clique em "Iniciar", depois envie mensagens como "oi", "1", "pizza de calabresa", etc.
+          </div>
         </div>
 
         <div className="flex h-96">
           {/* Sessions List */}
           <div className="w-1/3 border-r border-gray-200 bg-gray-50">
             <div className="p-4 border-b border-gray-200">
-              <div className="flex gap-2">
+              <div className="flex gap-2 mb-2">
                 <input
                   type="text"
                   value={simulatedPhone}
@@ -268,6 +411,15 @@ export function WhatsAppBot({
                   Iniciar
                 </button>
               </div>
+              <button
+                onClick={() => {
+                  setSimulatedPhone('11999999999');
+                  setTimeout(() => createNewSession(), 100);
+                }}
+                className="w-full bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                🧪 Teste Rápido (11999999999)
+              </button>
             </div>
 
             <div className="overflow-y-auto h-full">

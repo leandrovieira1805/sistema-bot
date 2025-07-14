@@ -294,13 +294,47 @@ export function useStore() {
   };
 
   const updateSession = (phone: string, updates: Partial<CustomerSession>) => {
-    setCustomerSessions((prev: CustomerSession[]) => 
-      prev.map((session: CustomerSession) => 
-        session.phone === phone 
-          ? { ...session, ...updates, lastActivity: new Date() }
-          : session
-      )
-    );
+    console.log('=== ATUALIZANDO SESSÃO ===');
+    console.log('Telefone:', phone);
+    console.log('Atualizações:', updates);
+    console.log('Sessões atuais:', customerSessions);
+    
+    setCustomerSessions((prev: CustomerSession[]) => {
+      const sessionIndex = prev.findIndex((session: CustomerSession) => session.phone === phone);
+      console.log('Índice da sessão:', sessionIndex);
+      
+      if (sessionIndex === -1) {
+        console.log('❌ Sessão não encontrada, criando nova...');
+        // Se a sessão não existe, criar uma nova
+        const newSession: CustomerSession = {
+          phone,
+          cart: [],
+          step: 'greeting',
+          messages: [],
+          customerData: {},
+          lastActivity: new Date(),
+          ...updates
+        };
+        console.log('Nova sessão criada:', newSession);
+        return [...prev, newSession];
+      } else {
+        console.log('✅ Sessão encontrada, atualizando...');
+        const updatedSessions = prev.map((session: CustomerSession, index: number) => {
+          if (index === sessionIndex) {
+            const updatedSession = { 
+              ...session, 
+              ...updates, 
+              lastActivity: new Date() 
+            };
+            console.log('Sessão atualizada:', updatedSession);
+            return updatedSession;
+          }
+          return session;
+        });
+        console.log('Sessões após atualização:', updatedSessions);
+        return updatedSessions;
+      }
+    });
   };
 
   const getAllProducts = () => {

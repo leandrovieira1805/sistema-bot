@@ -114,18 +114,59 @@ export function StoreSettings({ config, onUpdate }: StoreSettingsProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Imagem do Cardápio
             </label>
-            <div className="flex items-center gap-4">
+            <div className="space-y-4">
+              {/* Checkbox para ativar/desativar */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="enableMenuImage"
+                  checked={!!formData.menuImage}
+                  onChange={(e) => {
+                    if (!e.target.checked) {
+                      handleChange('menuImage', '');
+                    } else if (!formData.menuImage) {
+                      // Se ativou mas não tem imagem, usar uma padrão
+                      handleChange('menuImage', 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800');
+                    }
+                  }}
+                  className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                />
+                <label htmlFor="enableMenuImage" className="text-sm text-gray-700">
+                  Enviar imagem do cardápio nas conversas
+                </label>
+              </div>
+              
+              {/* Upload de imagem */}
               {formData.menuImage && (
-                <img src={formData.menuImage} alt="Cardápio" className="h-24 rounded shadow border" />
+                <div className="flex items-center gap-4">
+                  <img src={formData.menuImage} alt="Cardápio" className="h-24 rounded shadow border" />
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploading}
+                      className="block"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleChange('menuImage', '')}
+                      className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                    >
+                      Remover imagem
+                    </button>
+                    {uploading && <span className="text-sm text-gray-500 flex items-center gap-1"><Upload className="animate-spin" size={16}/> Enviando...</span>}
+                  </div>
+                </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                disabled={uploading}
-                className="block"
-              />
-              {uploading && <span className="text-sm text-gray-500 flex items-center gap-1"><Upload className="animate-spin" size={16}/> Enviando...</span>}
+              
+              {/* Mensagem informativa */}
+              <p className="text-xs text-gray-500">
+                {formData.menuImage 
+                  ? "✅ A imagem do cardápio será enviada automaticamente nas conversas."
+                  : "❌ Apenas o texto será enviado, sem imagem do cardápio."
+                }
+              </p>
             </div>
           </div>
 

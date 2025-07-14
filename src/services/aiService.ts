@@ -18,6 +18,7 @@ export class AIService {
     nextStep: string;
     shouldSendImage?: string;
     context?: any;
+    cartUpdate?: any[];
   } {
     const lowerMessage = message.toLowerCase().trim();
     const context = this.analyzeContext(session, message);
@@ -112,7 +113,7 @@ export class AIService {
       return {
         response: this.generateWelcomeResponse(context),
         nextStep: 'ordering',
-        shouldSendImage: this.storeConfig.menuImage || this.storeConfig.menuImages?.[0]
+        shouldSendImage: this.storeConfig.menuImage && this.storeConfig.menuImage.trim() !== '' ? this.storeConfig.menuImage : undefined
       };
     }
     
@@ -121,7 +122,7 @@ export class AIService {
       return {
         response: this.generateMenuResponse(context),
         nextStep: 'ordering',
-        shouldSendImage: this.storeConfig.menuImage || this.storeConfig.menuImages?.[0]
+        shouldSendImage: this.storeConfig.menuImage && this.storeConfig.menuImage.trim() !== '' ? this.storeConfig.menuImage : undefined
       };
     }
     
@@ -136,7 +137,7 @@ export class AIService {
     return {
       response: this.generateMenuResponse(context),
       nextStep: 'ordering',
-      shouldSendImage: this.storeConfig.menuImage || this.storeConfig.menuImages?.[0]
+      shouldSendImage: this.storeConfig.menuImage && this.storeConfig.menuImage.trim() !== '' ? this.storeConfig.menuImage : undefined
     };
   }
 
@@ -159,7 +160,11 @@ export class AIService {
       
       `${greeting}! 🌟 Oi, tudo bem? Que bom que você veio pra ${storeName}! 😊\n\nDá uma olhada no nosso cardápio que tá uma delícia! 🍕💫\n\nMe fala o que você tá afim de comer! 😍`,
       
-      `${greeting}! 🎊 Seja muito bem-vindo(a) à ${storeName}! Tô aqui pra te ajudar! 😄\n\nAcabei de organizar nosso cardápio com as melhores opções! 🍕⭐\n\nO que você gostaria de pedir? 😋`
+      `${greeting}! 🎊 Seja muito bem-vindo(a) à ${storeName}! Tô aqui pra te ajudar! 😄\n\nAcabei de organizar nosso cardápio com as melhores opções! 🍕⭐\n\nO que você gostaria de pedir? 😋`,
+      
+      `${greeting}! 🥰 Oi! Que felicidade ter você aqui na ${storeName}! 😊\n\nPreparei nosso cardápio com muito carinho pra você! 🍕💖\n\nMe conta, qual delícia você tá com vontade? 😋`,
+      
+      `${greeting}! 🌈 Bem-vindo(a) à ${storeName}! Tô super animado pra te atender! 😄\n\nDá uma olhada no nosso cardápio que tá incrível! 🍕✨\n\nO que você gostaria de experimentar hoje? 🤔`
     ];
     
     return welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
@@ -174,7 +179,11 @@ export class AIService {
       
       `Claro! 🍽️ Aqui está nosso cardápio completo!\n\nTodas as opções estão uma delícia, pode escolher sem medo! 😄\n\nQual vai ser sua escolha? 😍`,
       
-      `Beleza! 🍕 Aqui está nosso cardápio da ${this.storeConfig.name}!\n\nTodas as opções estão incríveis, vai ser difícil escolher! 😅\n\nMe fala o que você tá afim! 😋`
+      `Beleza! 🍕 Aqui está nosso cardápio da ${this.storeConfig.name}!\n\nTodas as opções estão incríveis, vai ser difícil escolher! 😅\n\nMe fala o que você tá afim! 😋`,
+      
+      `Aqui está! 🍕 Nosso cardápio completo da ${this.storeConfig.name}!\n\nTodas as opções estão fresquinhas e deliciosas! 😊\n\nO que você gostaria de pedir? 🤔`,
+      
+      `Pronto! 📋 Aqui está nosso cardápio com todas as opções!\n\nCada item foi preparado com muito amor! ❤️\n\nMe conta, qual delícia você tá afim? 😋`
     ];
     
     return menuMessages[Math.floor(Math.random() * menuMessages.length)];
@@ -212,7 +221,10 @@ export class AIService {
     const lowerMessage = message.toLowerCase();
     
     // Detectar finalização
-    if (lowerMessage.includes('finalizar') || lowerMessage.includes('terminar') || lowerMessage.includes('pronto') || lowerMessage.includes('acabei')) {
+    if (lowerMessage.includes('finalizar') || lowerMessage.includes('terminar') || lowerMessage.includes('pronto') || lowerMessage.includes('acabei') || 
+        lowerMessage.includes('sim') || lowerMessage.includes('também') || lowerMessage.includes('tambem') || lowerMessage.includes('quero finalizar') ||
+        lowerMessage.includes('finalizar pedido') || lowerMessage.includes('terminar pedido') || lowerMessage.includes('pronto pedido') ||
+        lowerMessage === 'sim' || lowerMessage === 'também' || lowerMessage === 'tambem' || lowerMessage === 'finalizar') {
       if (!context.hasCart) {
         const emptyCartMessages = [
           `Ops! 😅 Ainda não adicionamos nada ao seu pedido.\n\nQue tal escolher algo delicioso do nosso cardápio primeiro? 🍕\n\nPode me dizer o que você gostaria de experimentar! 😊`,
@@ -236,7 +248,18 @@ export class AIService {
       };
     }
     
-    // Detectar produto
+    // Detectar remoção de produtos
+    if (lowerMessage.includes('remove') || lowerMessage.includes('tira') || lowerMessage.includes('retira') || lowerMessage.includes('tirar') || lowerMessage.includes('remover')) {
+      return this.handleRemoveProduct(session, message, context);
+    }
+    
+    // Detectar múltiplos produtos na mesma mensagem
+    const multipleProducts = this.findMultipleProducts(message);
+    if (multipleProducts.length > 0) {
+      return this.handleMultipleProducts(session, multipleProducts, message, context);
+    }
+    
+    // Detectar produto único
     const product = this.findProduct(message);
     if (product) {
       return {
@@ -263,6 +286,179 @@ export class AIService {
     }) || null;
   }
 
+  // Encontrar múltiplos produtos na mesma mensagem
+  private findMultipleProducts(message: string): Product[] {
+    const lowerMessage = message.toLowerCase();
+    const foundProducts: Product[] = [];
+    const usedWords = new Set<string>();
+
+    // Ordenar produtos por nome (mais específicos primeiro)
+    const sortedProducts = [...this.products].sort((a, b) => 
+      b.name.split(' ').length - a.name.split(' ').length
+    );
+
+    sortedProducts.forEach(product => {
+      const productName = product.name.toLowerCase();
+      const productWords = productName.split(' ');
+      
+      // Verificar se todas as palavras do produto estão na mensagem
+      const allWordsFound = productWords.every(word => {
+        // Verificar se a palavra não foi usada por outro produto
+        if (usedWords.has(word)) return false;
+        
+        // Verificar se a palavra está na mensagem
+        return lowerMessage.includes(word);
+      });
+      
+      if (allWordsFound) {
+        foundProducts.push(product);
+        // Marcar palavras como usadas
+        productWords.forEach(word => usedWords.add(word));
+      }
+    });
+
+    return foundProducts;
+  }
+
+  // Tratar múltiplos produtos na mesma mensagem
+  private handleMultipleProducts(session: CustomerSession, products: Product[], message: string, context: any) {
+    const lowerMessage = message.toLowerCase();
+    const updatedCart = [...(session.cart || [])];
+    const addedProducts: string[] = [];
+
+    console.log('🔍 Processando múltiplos produtos:', products.map(p => p.name));
+    console.log('📝 Mensagem:', message);
+
+    products.forEach(product => {
+      // Extrair quantidade específica para este produto
+      const quantity = this.extractQuantityForProduct(lowerMessage, product);
+      
+      console.log(`📊 Produto: ${product.name}, Quantidade detectada: ${quantity}`);
+      
+      if (quantity > 0) {
+        // Verificar se o produto já está no carrinho
+        const existingItem = updatedCart.find(item => item.product.id === product.id);
+        
+        if (existingItem) {
+          // Atualizar quantidade existente
+          existingItem.quantity += quantity;
+          console.log(`🔄 Atualizando ${product.name}: ${existingItem.quantity - quantity} + ${quantity} = ${existingItem.quantity}`);
+        } else {
+          // Adicionar novo produto
+          updatedCart.push({ product, quantity });
+          console.log(`➕ Adicionando ${product.name}: ${quantity}`);
+        }
+        
+        addedProducts.push(`${quantity}x ${product.name}`);
+      }
+    });
+
+    console.log('📋 Produtos adicionados:', addedProducts);
+    console.log('🛒 Carrinho atualizado:', updatedCart);
+
+    if (addedProducts.length === 0) {
+      return {
+        response: `Hmm, não consegui identificar as quantidades dos produtos. Pode me dizer algo como "2 pizza de calabresa e 1 coca cola"? 😊`,
+        nextStep: 'ordering'
+      };
+    }
+
+    const cartSummary = this.getCartSummaryFromItems(updatedCart);
+    const addedText = addedProducts.join(', ');
+
+    const multipleProductsMessages = [
+      `🎉 Perfeito! Adicionei ${addedText} ao seu pedido! 😊\n\n📋 *Seu carrinho:*\n${cartSummary}\n\nQuer adicionar mais alguma coisa ou finalizar o pedido? 🤔`,
+      
+      `✅ Beleza! ${addedText} foram adicionados com sucesso! 😄\n\n📋 *Seu carrinho:*\n${cartSummary}\n\nVai querer mais alguma coisa ou finalizar? 😋`,
+      
+      `🌟 Ótima escolha! ${addedText} estão no seu carrinho! 😍\n\n📋 *Seu carrinho:*\n${cartSummary}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`,
+      
+      `💫 Incrível! ${addedText} foram adicionados ao seu pedido! ✨\n\n📋 *Seu carrinho:*\n${cartSummary}\n\nVai querer mais alguma coisa ou finalizar? 😊`
+    ];
+
+    return {
+      response: multipleProductsMessages[Math.floor(Math.random() * multipleProductsMessages.length)],
+      nextStep: 'ordering',
+      cartUpdate: updatedCart
+    };
+  }
+
+  // Extrair quantidade específica para um produto
+  private extractQuantityForProduct(message: string, product: Product): number {
+    const lowerMessage = message.toLowerCase();
+    const productName = product.name.toLowerCase();
+    
+    // Dicionário de números por extenso
+    const numberWords: { [key: string]: number } = {
+      'zero': 0, 'um': 1, 'uma': 1, 'dois': 2, 'duas': 2, 'tres': 3, 'três': 3,
+      'quatro': 4, 'cinco': 5, 'seis': 6, 'sete': 7, 'oito': 8, 'nove': 9, 'dez': 10,
+      'onze': 11, 'doze': 12, 'treze': 13, 'quatorze': 14, 'catorze': 14, 'quinze': 15,
+      'dezesseis': 16, 'dezessete': 17, 'dezoito': 18, 'dezenove': 19, 'vinte': 20
+    };
+    
+    // Padrões para encontrar quantidade antes do produto
+    const patterns = [
+      // Padrão: "2 pizza de calabresa"
+      new RegExp(`(\\d+)\\s*${productName.replace(/\s+/g, '\\s+')}`, 'i'),
+      // Padrão: "pizza de calabresa 2"
+      new RegExp(`${productName.replace(/\s+/g, '\\s+')}\\s*(\\d+)`, 'i'),
+      // Padrão: "duas pizza de calabresa"
+      new RegExp(`(${Object.keys(numberWords).join('|')})\\s+${productName.replace(/\s+/g, '\\s+')}`, 'i'),
+      // Padrão: "pizza de calabresa duas"
+      new RegExp(`${productName.replace(/\s+/g, '\\s+')}\\s+(${Object.keys(numberWords).join('|')})`, 'i'),
+      // Padrão: "2 pizza"
+      new RegExp(`(\\d+)\\s*${productName.split(' ')[0]}`, 'i'),
+      // Padrão: "duas pizza"
+      new RegExp(`(${Object.keys(numberWords).join('|')})\\s+${productName.split(' ')[0]}`, 'i')
+    ];
+    
+    for (const pattern of patterns) {
+      const match = lowerMessage.match(pattern);
+      if (match) {
+        const quantity = match[1];
+        // Se for número, converter diretamente
+        if (/^\d+$/.test(quantity)) {
+          return parseInt(quantity);
+        }
+        // Se for palavra, usar o dicionário
+        if (numberWords[quantity]) {
+          return numberWords[quantity];
+        }
+      }
+    }
+    
+    // Se não encontrou padrão específico, procurar por números próximos ao produto
+    const words = lowerMessage.split(/\s+/);
+    const productWords = productName.split(/\s+/);
+    
+    for (let i = 0; i < words.length; i++) {
+      if (productWords.some(word => words[i].includes(word))) {
+        // Verificar se há número antes ou depois
+        if (i > 0) {
+          const prevWord = words[i - 1];
+          if (/^\d+$/.test(prevWord)) {
+            return parseInt(prevWord);
+          }
+          if (numberWords[prevWord]) {
+            return numberWords[prevWord];
+          }
+        }
+        if (i < words.length - 1) {
+          const nextWord = words[i + 1];
+          if (/^\d+$/.test(nextWord)) {
+            return parseInt(nextWord);
+          }
+          if (numberWords[nextWord]) {
+            return numberWords[nextWord];
+          }
+        }
+      }
+    }
+    
+    // Se não encontrou quantidade específica, retornar 1
+    return 1;
+  }
+
   // Gerar resposta de produto adicionado
   private generateProductAddedResponse(product: Product, session: CustomerSession, context: any): string {
     const cartItems = session.cart?.map(item => 
@@ -276,7 +472,13 @@ export class AIService {
       
       `🌟 Ótima escolha! ${product.name} tá no seu carrinho! 😍\n\n📋 *Seu pedido:*\n${cartItems}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`,
       
-      `💫 Incrível! ${product.name} foi adicionado ao seu pedido! ✨\n\n📋 *Seu carrinho:*\n${cartItems}\n\nVai querer mais alguma coisa ou finalizar? 😊`
+      `💫 Incrível! ${product.name} foi adicionado ao seu pedido! ✨\n\n📋 *Seu carrinho:*\n${cartItems}\n\nVai querer mais alguma coisa ou finalizar? 😊`,
+      
+      `🥰 Que delícia! ${product.name} tá no seu carrinho! 😊\n\n📋 *Seu pedido:*\n${cartItems}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`,
+      
+      `✨ Perfeito! ${product.name} foi adicionado! 😄\n\n📋 *Seu carrinho:*\n${cartItems}\n\nVai querer mais alguma coisa ou finalizar? 😋`,
+      
+      `🎊 Beleza! ${product.name} tá no seu pedido! 😍\n\n📋 *Seu carrinho:*\n${cartItems}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`
     ];
     
     return productMessages[Math.floor(Math.random() * productMessages.length)];
@@ -291,7 +493,13 @@ export class AIService {
       
       `Desculpa, não encontrei esse produto! 😅\n\nDá uma olhada no nosso cardápio que tem várias opções incríveis! 🍕\n\nMe fala o que você tá afim! 😊`,
       
-      `Não tenho esse produto no cardápio! 😅\n\nOlha só as opções que temos disponíveis! 🍕\n\nTem coisa muito boa pra você! 😍`
+      `Não tenho esse produto no cardápio! 😅\n\nOlha só as opções que temos disponíveis! 🍕\n\nTem coisa muito boa pra você! 😍`,
+      
+      `Hmm, não tenho esse produto! 😅\n\nQue tal dar uma olhada no nosso cardápio? 🍕\n\nTem várias delícias pra você escolher! 😊`,
+      
+      `Ops! Não encontrei esse produto! 😅\n\nDá uma olhada no nosso cardápio que tem várias opções incríveis! 🍕\n\nMe conta o que você tá afim! 😋`,
+      
+      `Desculpa, não tenho esse produto disponível! 😅\n\nOlha só o nosso cardápio que tem várias opções deliciosas! 🍕\n\nTô aqui pra te ajudar a escolher! 😊`
     ];
     
     return unknownMessages[Math.floor(Math.random() * unknownMessages.length)];
@@ -624,5 +832,134 @@ export class AIService {
       response: unknownMessages[Math.floor(Math.random() * unknownMessages.length)],
       nextStep: 'ordering'
     };
+  }
+
+  // Tratar remoção de produtos
+  private handleRemoveProduct(session: CustomerSession, message: string, context: any) {
+    const lowerMessage = message.toLowerCase();
+    
+    // Se não há carrinho, informar que está vazio
+    if (!context.hasCart) {
+      const emptyCartMessages = [
+        `😅 Ops! Seu carrinho está vazio!\n\nQue tal adicionar algo delicioso primeiro? 🍕\n\nMe conta o que você gostaria de experimentar! 😊`,
+        
+        `🤔 Hmm, não tem nada no seu carrinho!\n\nQue tal escolher algo gostoso do nosso cardápio? 🍕\n\nTô aqui pra te ajudar! 😄`,
+        
+        `😅 Seu carrinho tá vazio!\n\nVamos adicionar algo delicioso primeiro? 🍕\n\nTem várias opções incríveis! 😍`
+      ];
+      
+      return {
+        response: emptyCartMessages[Math.floor(Math.random() * emptyCartMessages.length)],
+        nextStep: 'ordering'
+      };
+    }
+    
+    // Encontrar produto na mensagem
+    const product = this.findProduct(message);
+    if (!product) {
+      const notFoundMessages = [
+        `🤔 Não encontrei esse produto no seu carrinho!\n\n📋 *Seu carrinho atual:*\n${this.getCartSummary(session)}\n\nMe fala qual produto você quer remover! 😊`,
+        
+        `😅 Ops! Não tenho esse produto no seu carrinho!\n\n📋 *Seu carrinho:*\n${this.getCartSummary(session)}\n\nQual produto você quer remover? 🤔`,
+        
+        `Hmm, não encontrei esse produto!\n\n📋 *Seu carrinho:*\n${this.getCartSummary(session)}\n\nMe conta qual produto você quer remover! 😊`
+      ];
+      
+      return {
+        response: notFoundMessages[Math.floor(Math.random() * notFoundMessages.length)],
+        nextStep: 'ordering'
+      };
+    }
+    
+    // Verificar se o produto está no carrinho
+    const cartItem = session.cart?.find(item => item.product.id === product.id);
+    if (!cartItem) {
+      const notInCartMessages = [
+        `😅 Ops! ${product.name} não está no seu carrinho!\n\n📋 *Seu carrinho:*\n${this.getCartSummary(session)}\n\nQual produto você quer remover? 🤔`,
+        
+        `🤔 ${product.name} não está no seu carrinho!\n\n📋 *Seu carrinho:*\n${this.getCartSummary(session)}\n\nMe fala qual produto você quer remover! 😊`,
+        
+        `Hmm, ${product.name} não está no seu carrinho!\n\n📋 *Seu carrinho:*\n${this.getCartSummary(session)}\n\nQual produto você quer remover? 🤔`
+      ];
+      
+      return {
+        response: notInCartMessages[Math.floor(Math.random() * notInCartMessages.length)],
+        nextStep: 'ordering'
+      };
+    }
+    
+    // Detectar quantidade a remover
+    const quantityToRemove = this.extractQuantity(message, cartItem.quantity);
+    
+    // Remover produto do carrinho
+    const updatedCart = session.cart?.map(item => {
+      if (item.product.id === product.id) {
+        const newQuantity = Math.max(0, item.quantity - quantityToRemove);
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    }).filter(item => item.quantity > 0) || [];
+    
+    // Gerar resposta
+    if (quantityToRemove >= cartItem.quantity) {
+      // Removeu tudo
+      const removedAllMessages = [
+        `✅ Pronto! Removi ${product.name} do seu carrinho! 😊\n\n📋 *Seu carrinho:*\n${this.getCartSummaryFromItems(updatedCart)}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`,
+        
+        `🎉 Beleza! ${product.name} foi removido do seu carrinho! 😄\n\n📋 *Seu carrinho:*\n${this.getCartSummaryFromItems(updatedCart)}\n\nVai querer adicionar mais alguma coisa ou finalizar? 😋`,
+        
+        `🌟 Perfeito! ${product.name} foi removido! 😍\n\n📋 *Seu carrinho:*\n${this.getCartSummaryFromItems(updatedCart)}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`
+      ];
+      
+      return {
+        response: removedAllMessages[Math.floor(Math.random() * removedAllMessages.length)],
+        nextStep: 'ordering',
+        cartUpdate: updatedCart
+      };
+    } else {
+      // Removeu parcialmente
+      const removedPartialMessages = [
+        `✅ Pronto! Removi ${quantityToRemove} ${product.name} do seu carrinho! 😊\n\n📋 *Seu carrinho:*\n${this.getCartSummaryFromItems(updatedCart)}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`,
+        
+        `🎉 Beleza! Removi ${quantityToRemove} ${product.name}! 😄\n\n📋 *Seu carrinho:*\n${this.getCartSummaryFromItems(updatedCart)}\n\nVai querer adicionar mais alguma coisa ou finalizar? 😋`,
+        
+        `🌟 Perfeito! Removi ${quantityToRemove} ${product.name}! 😍\n\n📋 *Seu carrinho:*\n${this.getCartSummaryFromItems(updatedCart)}\n\nQuer adicionar mais alguma coisa ou finalizar? 🤔`
+      ];
+      
+      return {
+        response: removedPartialMessages[Math.floor(Math.random() * removedPartialMessages.length)],
+        nextStep: 'ordering',
+        cartUpdate: updatedCart
+      };
+    }
+  }
+
+  // Extrair quantidade da mensagem
+  private extractQuantity(message: string, maxQuantity: number): number {
+    const lowerMessage = message.toLowerCase();
+    
+    // Procurar por números
+    const numberMatch = lowerMessage.match(/(\d+)/);
+    if (numberMatch) {
+      const quantity = parseInt(numberMatch[1]);
+      return Math.min(quantity, maxQuantity);
+    }
+    
+    // Se não encontrou número, remover 1
+    return 1;
+  }
+
+  // Obter resumo do carrinho
+  private getCartSummary(session: CustomerSession): string {
+    return session.cart?.map(item => 
+      `${item.quantity}x ${item.product.name}`
+    ).join('\n') || 'Vazio';
+  }
+
+  // Obter resumo do carrinho a partir de itens
+  private getCartSummaryFromItems(items: any[]): string {
+    return items.map(item => 
+      `${item.quantity}x ${item.product.name}`
+    ).join('\n') || 'Vazio';
   }
 } 
