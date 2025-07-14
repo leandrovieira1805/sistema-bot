@@ -704,6 +704,13 @@ async function processCustomerMessage(message, contactName) {
     shouldSendImage: aiResponse.shouldSendImage,
     nextStep: aiResponse.nextStep
   });
+  
+  // Debug detalhado da imagem do cardápio
+  console.log('🔍 Debug da imagem do cardápio:');
+  console.log('- shouldSendImage:', aiResponse.shouldSendImage);
+  console.log('- storeData.config.menuImage:', storeData.config?.menuImage);
+  console.log('- storeData.config.menuImages:', storeData.config?.menuImages);
+  console.log('- aiService.storeConfig.menuImage:', aiService?.storeConfig?.menuImage);
 
   return {
     response: aiResponse.response,
