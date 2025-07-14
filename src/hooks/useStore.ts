@@ -7,6 +7,7 @@ const defaultStoreConfig: StoreConfig = {
   greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
   deliveryFee: 5.00,
   pixKey: 'contato@pizzariadelicia.com.br',
+  pixKeyHolder: 'João Silva',
   address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
   menuImage: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800',
   menuImages: []

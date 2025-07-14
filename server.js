@@ -242,6 +242,7 @@ let users = loadUsers() || [
       greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
       deliveryFee: 5.00,
       pixKey: 'contato@pizzariadelicia.com.br',
+      pixKeyHolder: 'João Silva',
       address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
       menuImage: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
@@ -258,6 +259,7 @@ let users = loadUsers() || [
       greeting: 'Olá! Seja bem-vindo à Bebidas Delícia. Digite o número da opção desejada:\n1. Ver Catálogo de Bebidas 🥤\n2. Ver Promoções 🔥',
       deliveryFee: 3.00,
       pixKey: 'evellyn@bebidasdelicia.com.br',
+      pixKeyHolder: 'Evellyn Lavinian',
       address: 'Rua das Bebidas, 456 - Centro - Cidade Exemplo',
       menuImage: 'https://images.pexels.com/photos/50593/coca-cola-cold-drink-soft-drink-coke-50593.jpeg?auto=compress&cs=tinysrgb&w=800'
     },
@@ -277,6 +279,7 @@ let storeData = loadedStoreData || {
     greeting: 'Olá! Seja bem-vindo à Pizzaria Delícia. Digite o número da opção desejada:\n1. Ver Cardápio 📖\n2. Ver Promoções 🔥',
     deliveryFee: 5.00,
     pixKey: 'contato@pizzariadelicia.com.br',
+    pixKeyHolder: 'João Silva',
     address: 'Rua das Pizzas, 123 - Centro - Cidade Exemplo',
     menuImage: 'https://images.pexels.com/photos/315755/pexels-photo-315755.jpeg?auto=compress&cs=tinysrgb&w=800'
   },

@@ -3,6 +3,7 @@ export interface StoreConfig {
   greeting: string;
   deliveryFee: number;
   pixKey: string;
+  pixKeyHolder: string; // Nome do titular da chave PIX
   address: string;
   menuImage: string;
   menuImages?: string[]; // Array de múltiplas imagens do cardápio

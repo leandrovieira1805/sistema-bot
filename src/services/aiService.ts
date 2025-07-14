@@ -679,14 +679,15 @@ export class AIService {
     
     if (lowerMessage.includes('pix') || lowerMessage === '1') {
       const pixKey = this.storeConfig.pixKey;
+      const pixKeyHolder = this.storeConfig.pixKeyHolder || 'Titular';
       const total = this.calculateTotal(session, context);
       
       const pixMessages = [
-        `💳 PIX selecionado!\n\n📱 *Chave PIX:* ${pixKey}\n💰 *Valor:* R$ ${total.toFixed(2)}\n\n📸 Envie o comprovante do PIX para finalizarmos seu pedido!\n\n⏰ *Prazo:* 10 minutos`,
+        `💳 PIX selecionado!\n\n📱 *Chave PIX:* ${pixKey}\n👤 *Titular:* ${pixKeyHolder}\n💰 *Valor:* R$ ${total.toFixed(2)}\n\n📸 Envie o comprovante do PIX para finalizarmos seu pedido!\n\n⏰ *Prazo:* 10 minutos`,
         
-        `💳 Beleza! PIX é uma ótima escolha!\n\n📱 *Chave PIX:* ${pixKey}\n💰 *Valor:* R$ ${total.toFixed(2)}\n\n📸 Manda o comprovante do PIX pra gente finalizar!\n\n⏰ *Prazo:* 10 minutos`,
+        `💳 Beleza! PIX é uma ótima escolha!\n\n📱 *Chave PIX:* ${pixKey}\n👤 *Titular:* ${pixKeyHolder}\n💰 *Valor:* R$ ${total.toFixed(2)}\n\n📸 Manda o comprovante do PIX pra gente finalizar!\n\n⏰ *Prazo:* 10 minutos`,
         
-        `💳 Perfeito! PIX é super prático!\n\n📱 *Chave PIX:* ${pixKey}\n💰 *Valor:* R$ ${total.toFixed(2)}\n\n📸 Envia o comprovante do PIX pra finalizarmos!\n\n⏰ *Prazo:* 10 minutos`
+        `💳 Perfeito! PIX é super prático!\n\n📱 *Chave PIX:* ${pixKey}\n👤 *Titular:* ${pixKeyHolder}\n💰 *Valor:* R$ ${total.toFixed(2)}\n\n📸 Envia o comprovante do PIX pra finalizarmos!\n\n⏰ *Prazo:* 10 minutos`
       ];
       
       return {
